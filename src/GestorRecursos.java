@@ -1,24 +1,31 @@
 package src;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GestorRecursos {
-    private Map<String, RecursoDigital> recursos;
+    private List<RecursoDigital> recursos;
 
     public GestorRecursos() {
-        this.recursos = new HashMap<>();
+        this.recursos = new ArrayList<>();
     }
 
     public void agregarRecurso(RecursoDigital recurso) {
-        this.recursos.put(recurso.getId(), recurso);
+        this.recursos.add(recurso);
     }
 
     public RecursoDigital obtenerRecurso(String id) {
-        return recursos.get(id);
+        for (RecursoDigital recurso : recursos) {
+            if (recurso.getId().equals(id)) {
+                return recurso;
+            }
+        }
+        return null; // Retorna null si no se encuentra el recurso
     }
 
-    public void eliminarRecurso(String id) {
-        recursos.remove(id);
+    public List<RecursoDigital> getRecursos() {
+        return recursos;
     }
+
+    // Métodos de búsqueda más avanzados se añadirán en otros Issues
 }

@@ -1,6 +1,8 @@
 package src;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Supplier;
@@ -40,7 +42,8 @@ public class Consola {
         System.out.println("4. Reservar Recurso");
         System.out.println("5. Cancelar Reserva");
         System.out.println("6. Mostrar Ubicación");
-        System.out.println("7. Salir");
+        System.out.println("7. Buscar Recursos"); // Opción para la búsqueda
+        System.out.println("8. Salir");
         System.out.print("Seleccione una opción: ");
     }
 
@@ -50,7 +53,7 @@ public class Consola {
                 agregarNuevoRecurso();
                 break;
             case "2":
-                mostrarRecursoPorId(); // <--- POSIBLEMENTE LA LÍNEA 53
+                mostrarRecursoPorId();
                 break;
             case "3":
                 prestarRecurso();
@@ -65,31 +68,13 @@ public class Consola {
                 mostrarUbicacion();
                 break;
             case "7":
+                mostrarMenuBusqueda(); // Llamada al nuevo menú de búsqueda
+                break;
+            case "8":
                 System.out.println("Saliendo del sistema.");
                 break;
             default:
                 System.out.println("Opción inválida.");
-        }
-    }
-
-    private void agregarNuevoRecurso() {
-        System.out.println("\n--- Agregar Nuevo Recurso ---");
-        System.out.println("Seleccione el tipo de recurso a agregar:");
-        for (Map.Entry<String, String> entry : tiposRecursos.entrySet()) {
-            System.out.println(entry.getKey() + ". " + entry.getValue());
-        }
-        System.out.print("Ingrese su opción: ");
-        String tipo = scanner.nextLine();
-
-        Supplier<RecursoDigital> creador = creadoresRecursos.get(tipo);
-        if (creador != null) {
-            RecursoDigital nuevoRecurso = creador.get();
-            if (nuevoRecurso != null) {
-                gestorRecursos.agregarRecurso(nuevoRecurso);
-                System.out.println("Recurso agregado con ID: " + nuevoRecurso.getId());
-            }
-        } else {
-            System.out.println("Opción inválida.");
         }
     }
 
@@ -144,6 +129,78 @@ public class Consola {
             recurso.mostrarDetalles();
         } else {
             System.out.println("No se encontró ningún recurso con el ID: " + id);
+        }
+    }
+    private void agregarNuevoRecurso() {
+        System.out.println("\n--- Agregar Nuevo Recurso ---");
+        System.out.println("Seleccione el tipo de recurso a agregar:");
+        System.out.println("1. Libro");
+        System.out.println("2. Revista");
+        System.out.println("3. Audiolibro");
+        System.out.print("Ingrese su opción: ");
+        String opcion = scanner.nextLine();
+
+        switch (opcion) {
+            case "1":
+                Libro nuevoLibro = crearLibroDesdeInput();
+                gestorRecursos.agregarRecurso(nuevoLibro);
+                System.out.println("Libro agregado con ID: " + nuevoLibro.getId());
+                break;
+            case "2":
+                Revista nuevaRevista = crearRevistaDesdeInput();
+                gestorRecursos.agregarRecurso(nuevaRevista);
+                System.out.println("Revista agregada con ID: " + nuevaRevista.getId());
+                break;
+            case "3":
+                Audiolibro nuevoAudiolibro = crearAudiolibroDesdeInput();
+                gestorRecursos.agregarRecurso(nuevoAudiolibro);
+                System.out.println("Audiolibro agregado con ID: " + nuevoAudiolibro.getId());
+                break;
+            default:
+                System.out.println("Opción inválida.");
+        }
+    }
+    private void mostrarMenuBusqueda() {
+        System.out.println("\n--- Menú de Búsqueda de Recursos ---");
+        System.out.println("1. Buscar por Título");
+        System.out.println("2. Buscar por Categoría");
+        System.out.println("3. Listar todos los recursos"); // Podemos añadir esto aquí
+        System.out.println("4. Volver al menú principal");
+        System.out.print("Seleccione una opción de búsqueda: ");
+        String opcionBusqueda = scanner.nextLine();
+        ejecutarOpcionBusqueda(opcionBusqueda);
+    }
+
+    private void ejecutarOpcionBusqueda(String opcionBusqueda) {
+        switch (opcionBusqueda) {
+            case "1":
+                // Implementar búsqueda por título (Issue GRC-Unificado-2)
+                System.out.println("Búsqueda por título (próximamente).");
+                break;
+            case "2":
+                // Implementar búsqueda por categoría (Issue GRC-Unificado-3)
+                System.out.println("Búsqueda por categoría (próximamente).");
+                break;
+            case "3":
+                listarTodosLosRecursos(); // Implementación básica para listar
+                break;
+            case "4":
+                System.out.println("Volviendo al menú principal.");
+                break;
+            default:
+                System.out.println("Opción de búsqueda inválida.");
+        }
+    }
+
+    private void listarTodosLosRecursos() {
+        List<RecursoDigital> todosLosRecursos = gestorRecursos.getRecursos();
+        if (todosLosRecursos.isEmpty()) {
+            System.out.println("No hay recursos disponibles en la biblioteca.");
+        } else {
+            System.out.println("\n--- Listado de todos los recursos ---");
+            for (RecursoDigital recurso : todosLosRecursos) {
+                System.out.println("ID: " + recurso.getId() + ", Título: " + recurso.getTitulo());
+            }
         }
     }
 
@@ -233,12 +290,17 @@ public class Consola {
         consola.gestorUsuarios.agregarUsuario(new Usuario("Juan Perez", "1", "juan.perez@email.com"));
         consola.gestorUsuarios.agregarUsuario(new Usuario("Maria Lopez", "2", "maria.lopez@email.com"));
 
+        // Agregar algunos recursos para probar
+        consola.gestorRecursos.agregarRecurso(new Libro("El Señor de los Anillos", "L001", "J.R.R. Tolkien", "978-0618260274", "Estantería A1", servicioNotificacionesConsola));
+        consola.gestorRecursos.agregarRecurso(new Revista("National Geographic", "R001", "Vol. 240 No. 3", "0027-9358", "Hemeroteca 2", servicioNotificacionesConsola));
+        consola.gestorRecursos.agregarRecurso(new Audiolibro("Harry Potter y la Piedra Filosofal", "A001", "Stephen Fry", "12 horas", "Sección Audiolibros", servicioNotificacionesConsola));
+
         String opcion;
         do {
             consola.mostrarMenu();
             opcion = consola.scanner.nextLine();
             consola.ejecutarOpcion(opcion);
-        } while (!opcion.equals("7"));
+        } while (!opcion.equals("8"));
 
         consola.cerrarScanner();
     }
