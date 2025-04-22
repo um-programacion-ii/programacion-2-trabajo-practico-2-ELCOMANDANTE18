@@ -1,6 +1,7 @@
 package src;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,9 +31,25 @@ public class GestorRecursos {
                 .collect(Collectors.toList());
     }
 
+    public List<RecursoDigital> buscarRecursosPorCategoria(CategoriaRecurso categoria) {
+        return recursos.stream()
+                .filter(recurso -> recurso.getCategoria() == categoria)
+                .collect(Collectors.toList());
+    }
+
     public List<RecursoDigital> getRecursos() {
         return recursos;
     }
 
-    // Métodos para ordenamiento se añadirán después
+    public void ordenarRecursos(Comparator<RecursoDigital> comparador) {
+        recursos.sort(comparador);
+    }
+
+    public static Comparator<RecursoDigital> compararPorId() {
+        return Comparator.comparing(RecursoDigital::getId);
+    }
+
+    public static Comparator<RecursoDigital> compararPorTitulo() {
+        return Comparator.comparing(RecursoDigital::getTitulo);
+    }
 }

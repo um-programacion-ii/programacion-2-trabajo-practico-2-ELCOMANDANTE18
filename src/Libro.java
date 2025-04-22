@@ -1,18 +1,15 @@
 package src;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class Libro implements RecursoDigital, Prestable, Reservable, Localizable {
+public class Libro implements RecursoDigital, Prestable, Localizable {
     private String titulo;
     private String id;
     private String autor;
     private String isbn;
-    private boolean prestado = false;
-    private boolean reservado = false;
-    private List<Usuario> listaDeEspera = new ArrayList<>();
     private String ubicacion;
-    private ServicioNotificaciones servicioNotificaciones; // Dependencia abstracta
+    private boolean prestado;
+    private Usuario usuarioPrestamo;
+    private ServicioNotificaciones servicioNotificaciones;
+    private final CategoriaRecurso categoria = CategoriaRecurso.LIBRO;
 
     public Libro(String titulo, String id, String autor, String isbn, String ubicacion, ServicioNotificaciones servicioNotificaciones) {
         this.titulo = titulo;
@@ -20,7 +17,9 @@ public class Libro implements RecursoDigital, Prestable, Reservable, Localizable
         this.autor = autor;
         this.isbn = isbn;
         this.ubicacion = ubicacion;
-        this.servicioNotificaciones = servicioNotificaciones; // Inyección por constructor
+        this.servicioNotificaciones = servicioNotificaciones;
+        this.prestado = false;
+        this.usuarioPrestamo = null;
     }
 
     @Override
@@ -34,81 +33,65 @@ public class Libro implements RecursoDigital, Prestable, Reservable, Localizable
     }
 
     @Override
-    public void mostrarDetalles() {
-        System.out.println("Libro: " + titulo + " (ID: " + id + ")");
-        System.out.println("  Autor: " + autor);
-        System.out.println("  ISBN: " + isbn);
-        System.out.println("  Ubicación: " + ubicacion);
-        System.out.println("  Prestado: " + (prestado ? "Sí" : "No"));
-        System.out.println("  Reservado: " + (reservado ? "Sí" : "No"));
-        if (!listaDeEspera.isEmpty()) {
-            System.out.println("  Lista de espera: " + listaDeEspera.stream().map(Usuario::getNombre).toList());
-        }
+    public String getUbicacion() { // <---- Una ÚNICA definición de getUbicacion()
+        return ubicacion;
     }
 
     @Override
-    public void prestar(Usuario usuario) {
-        this.prestado = true;
-        this.reservado = false;
-        System.out.println("Libro '" + getTitulo() + "' prestado a " + usuario.getNombre() + ".");
+    public CategoriaRecurso getCategoria() {
+        return categoria;
     }
-
-    @Override
-    public void devolver() {
-        this.prestado = false;
-        System.out.println("Libro '" + getTitulo() + "' devuelto.");
-        // Aquí podríamos implementar lógica para notificar al siguiente en la lista de espera
-    }
-
     @Override
     public boolean estaPrestado() {
         return prestado;
     }
 
     @Override
-    public void reservar(Usuario usuario) {
-        if (!prestado && !reservado) {
-            this.reservado = true;
-            this.listaDeEspera.add(usuario);
-            System.out.println("Libro '" + getTitulo() + "' reservado por " + usuario.getNombre() + ".");
-            if (servicioNotificaciones != null) {
-                servicioNotificaciones.enviarNotificaciones(usuario, "El libro '" + getTitulo() + "' ha sido reservado exitosamente.");
-            }
-        } else if (prestado) {
-            this.listaDeEspera.add(usuario);
-            System.out.println("Libro '" + getTitulo() + "' añadido a la lista de espera para " + usuario.getNombre() + ".");
+    public ServicioNotificaciones getServicioNotificaciones() {
+        return servicioNotificaciones;
+    }
+
+    @Override
+    public void mostrarDetalles() {
+        System.out.println("Libro:");
+        System.out.println("  Título: " + titulo);
+        System.out.println("  ID: " + id);
+        System.out.println("  Autor: " + autor);
+        System.out.println("  ISBN: " + isbn);
+        System.out.println("  Ubicación: " + ubicacion);
+        System.out.println("  Categoría: " + categoria);
+        if (prestado) {
+            System.out.println("  Prestado a: " + usuarioPrestamo.getNombre());
         } else {
-            System.out.println("El libro '" + getTitulo() + "' ya está reservado.");
+            System.out.println("  Disponible");
         }
     }
 
     @Override
-    public void cancelarReserva(Usuario usuario) {
-        if (listaDeEspera.remove(usuario)) {
-            if (listaDeEspera.isEmpty()) {
-                this.reservado = false;
-            }
-            System.out.println("Reserva para el libro '" + getTitulo() + "' cancelada por " + usuario.getNombre() + ".");
+    public void prestar(Usuario usuario) {
+        if (!prestado) {
+            this.prestado = true;
+            this.usuarioPrestamo = usuario;
+            getServicioNotificaciones().enviarNotificacion(usuario, "Préstamo del libro: " + titulo);
         } else {
-            System.out.println("El usuario '" + usuario.getNombre() + "' no tenía una reserva para este libro.");
+            System.out.println("El libro \"" + titulo + "\" ya está prestado a " + this.usuarioPrestamo.getNombre());
         }
     }
 
     @Override
-    public boolean estaReservado() {
-        return reservado || !listaDeEspera.isEmpty();
+    public void devolver(Usuario usuario) {
+        if (prestado && this.usuarioPrestamo.equals(usuario)) {
+            this.prestado = false;
+            this.usuarioPrestamo = null;
+            getServicioNotificaciones().enviarNotificacion(usuario, "Devolución del libro: " + titulo);
+        } else if (!prestado) {
+            System.out.println("El libro \"" + titulo + "\" no está prestado.");
+        } else {
+            System.out.println("El libro \"" + titulo + "\" fue prestado a otro usuario.");
+        }
     }
 
     @Override
-    public List<Usuario> getListaDeEspera() {
-        return listaDeEspera;
-    }
-
-    @Override
-    public String getUbicacion() {
-        return ubicacion;
-    }
-
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
     }

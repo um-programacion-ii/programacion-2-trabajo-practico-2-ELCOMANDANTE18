@@ -1,5 +1,6 @@
 package src;
 
 public interface Localizable {
-    String getUbicacion();
+    public String getUbicacion();
+    public void setUbicacion(String ubicacion);
 }

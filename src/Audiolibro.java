@@ -1,18 +1,15 @@
 package src;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class Audiolibro implements RecursoDigital, Prestable, Reservable, Localizable {
+public class Audiolibro implements RecursoDigital, Prestable, Localizable {
     private String titulo;
     private String id;
     private String narrador;
     private String duracion;
-    private boolean prestado = false;
-    private boolean reservado = false;
-    private List<Usuario> listaDeEspera = new ArrayList<>();
     private String ubicacion;
-    private ServicioNotificaciones servicioNotificaciones; // Dependencia abstracta
+    private boolean prestado;
+    private Usuario usuarioPrestamo;
+    private ServicioNotificaciones servicioNotificaciones;
+    private final CategoriaRecurso categoria = CategoriaRecurso.AUDIOLIBRO;
 
     public Audiolibro(String titulo, String id, String narrador, String duracion, String ubicacion, ServicioNotificaciones servicioNotificaciones) {
         this.titulo = titulo;
@@ -20,7 +17,9 @@ public class Audiolibro implements RecursoDigital, Prestable, Reservable, Locali
         this.narrador = narrador;
         this.duracion = duracion;
         this.ubicacion = ubicacion;
-        this.servicioNotificaciones = servicioNotificaciones; // Inyección por constructor
+        this.servicioNotificaciones = servicioNotificaciones;
+        this.prestado = false;
+        this.usuarioPrestamo = null;
     }
 
     @Override
@@ -32,83 +31,67 @@ public class Audiolibro implements RecursoDigital, Prestable, Reservable, Locali
     public String getId() {
         return id;
     }
-
-    @Override
-    public void mostrarDetalles() {
-        System.out.println("Audiolibro: " + titulo + " (ID: " + id + ")");
-        System.out.println("  Narrador: " + narrador);
-        System.out.println("  Duración: " + duracion);
-        System.out.println("  Ubicación: " + ubicacion);
-        System.out.println("  Prestado: " + (prestado ? "Sí" : "No"));
-        System.out.println("  Reservado: " + (reservado ? "Sí" : "No"));
-        if (!listaDeEspera.isEmpty()) {
-            System.out.println("  Lista de espera: " + listaDeEspera.stream().map(Usuario::getNombre).toList());
-        }
-    }
-
-    @Override
-    public void prestar(Usuario usuario) {
-        this.prestado = true;
-        this.reservado = false;
-        System.out.println("Audiolibro '" + getTitulo() + "' prestado a " + usuario.getNombre() + ".");
-    }
-
-    @Override
-    public void devolver() {
-        this.prestado = false;
-        System.out.println("Audiolibro '" + getTitulo() + "' devuelto.");
-        // Aquí podríamos implementar lógica para notificar al siguiente en la lista de espera
-    }
-
     @Override
     public boolean estaPrestado() {
         return prestado;
     }
 
     @Override
-    public void reservar(Usuario usuario) {
-        if (!prestado && !reservado) {
-            this.reservado = true;
-            this.listaDeEspera.add(usuario);
-            System.out.println("Audiolibro '" + getTitulo() + "' reservado por " + usuario.getNombre() + ".");
-            if (servicioNotificaciones != null) {
-                servicioNotificaciones.enviarNotificaciones(usuario, "El audiolibro '" + getTitulo() + "' ha sido reservado exitosamente.");
-            }
-        } else if (prestado) {
-            this.listaDeEspera.add(usuario);
-            System.out.println("Audiolibro '" + getTitulo() + "' añadido a la lista de espera para " + usuario.getNombre() + ".");
-        } else {
-            System.out.println("El audiolibro '" + getTitulo() + "' ya está reservado.");
-        }
-    }
-
-    @Override
-    public void cancelarReserva(Usuario usuario) {
-        if (listaDeEspera.remove(usuario)) {
-            if (listaDeEspera.isEmpty()) {
-                this.reservado = false;
-            }
-            System.out.println("Reserva para el audiolibro '" + getTitulo() + "' cancelada por " + usuario.getNombre() + ".");
-        } else {
-            System.out.println("El usuario '" + usuario.getNombre() + "' no tenía una reserva para este audiolibro.");
-        }
-    }
-
-    @Override
-    public boolean estaReservado() {
-        return reservado || !listaDeEspera.isEmpty();
-    }
-
-    @Override
-    public List<Usuario> getListaDeEspera() {
-        return listaDeEspera;
-    }
-
-    @Override
-    public String getUbicacion() {
+    public String getUbicacion() { // <---- Una ÚNICA definición de getUbicacion()
         return ubicacion;
     }
 
+    @Override
+    public CategoriaRecurso getCategoria() {
+        return categoria;
+    }
+
+    @Override
+    public ServicioNotificaciones getServicioNotificaciones() {
+        return servicioNotificaciones;
+    }
+
+    @Override
+    public void mostrarDetalles() {
+        System.out.println("Audiolibro:");
+        System.out.println("  Título: " + titulo);
+        System.out.println("  ID: " + id);
+        System.out.println("  Narrador: " + narrador);
+        System.out.println("  Duración: " + duracion);
+        System.out.println("  Ubicación: " + ubicacion);
+        System.out.println("  Categoría: " + categoria);
+        if (prestado) {
+            System.out.println("  Prestado a: " + usuarioPrestamo.getNombre());
+        } else {
+            System.out.println("  Disponible");
+        }
+    }
+
+    @Override
+    public void prestar(Usuario usuario) {
+        if (!prestado) {
+            this.prestado = true;
+            this.usuarioPrestamo = usuario;
+            getServicioNotificaciones().enviarNotificacion(usuario, "Préstamo del audiolibro: " + titulo);
+        } else {
+            System.out.println("El audiolibro \"" + titulo + "\" ya está prestado a " + this.usuarioPrestamo.getNombre());
+        }
+    }
+
+    @Override
+    public void devolver(Usuario usuario) {
+        if (prestado && this.usuarioPrestamo.equals(usuario)) {
+            this.prestado = false;
+            this.usuarioPrestamo = null;
+            getServicioNotificaciones().enviarNotificacion(usuario, "Devolución del audiolibro: " + titulo);
+        } else if (!prestado) {
+            System.out.println("El audiolibro \"" + titulo + "\" no está prestado.");
+        } else {
+            System.out.println("El audiolibro \"" + titulo + "\" fue prestado a otro usuario.");
+        }
+    }
+
+    @Override
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
     }

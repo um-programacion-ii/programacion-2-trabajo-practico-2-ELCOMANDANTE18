@@ -1,6 +1,5 @@
 package src;
 
 public interface ServicioNotificaciones {
-    void enviarNotificaciones(Usuario usuario, String mensaje);
-
+    void enviarNotificacion(Usuario usuario, String mensaje); // <---- Este es el método que falta en ServicioNotificacionesSMS
 }

@@ -1,17 +1,13 @@
 package src;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class Revista implements RecursoDigital, Reservable, Localizable {
+public class Revista implements RecursoDigital, Localizable {
     private String titulo;
     private String id;
     private String numero;
     private String issn;
-    private boolean reservado = false;
-    private List<Usuario> listaDeEspera = new ArrayList<>();
     private String ubicacion;
     private ServicioNotificaciones servicioNotificaciones;
+    private final CategoriaRecurso categoria = CategoriaRecurso.REVISTA;
 
     public Revista(String titulo, String id, String numero, String issn, String ubicacion, ServicioNotificaciones servicioNotificaciones) {
         this.titulo = titulo;
@@ -33,59 +29,32 @@ public class Revista implements RecursoDigital, Reservable, Localizable {
     }
 
     @Override
-    public void mostrarDetalles() {
-        System.out.println("Revista: " + titulo + " (ID: " + id + ")");
-        System.out.println("  Número: " + numero);
-        System.out.println("  ISSN: " + issn);
-        System.out.println("  Ubicación: " + ubicacion);
-        System.out.println("  Reservado: " + (reservado ? "Sí" : "No"));
-        if (!listaDeEspera.isEmpty()) {
-            System.out.println("  Lista de espera: " + listaDeEspera.stream().map(Usuario::getNombre).toList());
-        }
-    }
-
-    @Override
-    public void reservar(Usuario usuario) {
-        if (!reservado) {
-            this.reservado = true;
-            this.listaDeEspera.add(usuario);
-            System.out.println("Revista '" + getTitulo() + "' reservada por " + usuario.getNombre() + ".");
-            if (servicioNotificaciones != null) {
-                servicioNotificaciones.enviarNotificaciones(usuario, "La revista '" + getTitulo() + "' ha sido reservada exitosamente.");
-            }
-        } else {
-            this.listaDeEspera.add(usuario);
-            System.out.println("Revista '" + getTitulo() + "' añadida a la lista de espera para " + usuario.getNombre() + ".");
-        }
-    }
-
-    @Override
-    public void cancelarReserva(Usuario usuario) {
-        if (listaDeEspera.remove(usuario)) {
-            if (listaDeEspera.isEmpty()) {
-                this.reservado = false;
-            }
-            System.out.println("Reserva para la revista '" + getTitulo() + "' cancelada por " + usuario.getNombre() + ".");
-        } else {
-            System.out.println("El usuario '" + usuario.getNombre() + "' no tenía una reserva para esta revista.");
-        }
-    }
-
-    @Override
-    public boolean estaReservado() {
-        return reservado || !listaDeEspera.isEmpty();
-    }
-
-    @Override
-    public List<Usuario> getListaDeEspera() {
-        return listaDeEspera;
-    }
-
-    @Override
-    public String getUbicacion() {
+    public String getUbicacion() { // <---- Una ÚNICA definición de getUbicacion()
         return ubicacion;
     }
 
+    @Override
+    public CategoriaRecurso getCategoria() {
+        return categoria;
+    }
+
+    @Override
+    public ServicioNotificaciones getServicioNotificaciones() {
+        return servicioNotificaciones;
+    }
+
+    @Override
+    public void mostrarDetalles() {
+        System.out.println("Revista:");
+        System.out.println("  Título: " + titulo);
+        System.out.println("  ID: " + id);
+        System.out.println("  Número: " + numero);
+        System.out.println("  ISSN: " + issn);
+        System.out.println("  Ubicación: " + ubicacion);
+        System.out.println("  Categoría: " + categoria);
+    }
+
+    @Override
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
     }

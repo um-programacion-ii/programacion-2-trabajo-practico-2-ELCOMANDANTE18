@@ -1,7 +1,9 @@
 package src;
 
 public interface RecursoDigital {
-    String getTitulo();
-    String getId();
-    void mostrarDetalles();
+    public String getTitulo();
+    public String getId();
+    public CategoriaRecurso getCategoria();
+    public ServicioNotificaciones getServicioNotificaciones();
+    public void mostrarDetalles();
 }
