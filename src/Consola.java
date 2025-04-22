@@ -127,12 +127,12 @@ public class Consola {
     private void mostrarRecursoPorId() {
         System.out.print("Ingrese el ID del recurso a mostrar: ");
         String id = scanner.nextLine();
-        RecursoDigital recurso = gestorRecursos.obtenerRecurso(id);
-        if (recurso != null) {
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(id);
             System.out.println("\n--- Detalles del Recurso ---");
             recurso.mostrarDetalles();
-        } else {
-            System.out.println("No se encontró ningún recurso con el ID: " + id);
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -291,73 +291,82 @@ public class Consola {
     private void prestarRecurso() {
         System.out.print("Ingrese el ID del recurso a prestar: ");
         String recursoId = scanner.nextLine();
-        RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
-
-        if (recurso instanceof Prestable) {
-            System.out.print("Ingrese el ID del usuario que tomará prestado el recurso: ");
-            String usuarioId = scanner.nextLine();
-            Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
-
-            if (usuario != null) {
-                ((Prestable) recurso).prestar(usuario);
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
+            if (recurso instanceof Prestable) {
+                System.out.print("Ingrese el ID del usuario que tomará prestado el recurso: ");
+                String usuarioId = scanner.nextLine();
+                try {
+                    Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
+                    ((Prestable) recurso).prestar(usuario);
+                } catch (UsuarioNoEncontradoException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
             } else {
-                System.out.println("No se encontró ningún usuario con el ID: " + usuarioId);
+                System.out.println("El recurso con ID " + recursoId + " no se puede prestar.");
             }
-        } else {
-            System.out.println("El recurso con ID " + recursoId + " no se puede prestar.");
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void reservarRecurso() {
         System.out.print("Ingrese el ID del recurso a reservar: ");
         String recursoId = scanner.nextLine();
-        RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
-
-        if (recurso instanceof Reservable) {
-            System.out.print("Ingrese su ID de usuario: ");
-            String usuarioId = scanner.nextLine();
-            Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
-
-            if (usuario != null) {
-                ((Reservable) recurso).reservar(usuario);
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
+            if (recurso instanceof Reservable) {
+                System.out.print("Ingrese su ID de usuario: ");
+                String usuarioId = scanner.nextLine();
+                try {
+                    Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
+                    ((Reservable) recurso).reservar(usuario);
+                } catch (UsuarioNoEncontradoException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
             } else {
-                System.out.println("No se encontró ningún usuario con el ID: " + usuarioId);
+                System.out.println("El recurso con ID " + recursoId + " no se puede reservar.");
             }
-        } else {
-            System.out.println("El recurso con ID " + recursoId + " no se puede reservar.");
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void cancelarReserva() {
         System.out.print("Ingrese el ID del recurso para cancelar la reserva: ");
         String recursoId = scanner.nextLine();
-        RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
-
-        if (recurso instanceof Reservable) {
-            System.out.print("Ingrese su ID de usuario: ");
-            String usuarioId = scanner.nextLine();
-            Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
-
-            if (usuario != null) {
-                ((Reservable) recurso).cancelarReserva(usuario);
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
+            if (recurso instanceof Reservable) {
+                System.out.print("Ingrese su ID de usuario: ");
+                String usuarioId = scanner.nextLine();
+                try {
+                    Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
+                    ((Reservable) recurso).cancelarReserva(usuario);
+                } catch (UsuarioNoEncontradoException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
             } else {
-                System.out.println("No se encontró ningún usuario con el ID: " + usuarioId);
+                System.out.println("El recurso con ID " + recursoId + " no se puede reservar.");
             }
-        } else {
-            System.out.println("El recurso con ID " + recursoId + " no se puede reservar.");
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void mostrarUbicacion() {
         System.out.print("Ingrese el ID del recurso para mostrar su ubicación: ");
         String recursoId = scanner.nextLine();
-        RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
-
-        if (recurso instanceof Localizable) {
-            String ubicacion = ((Localizable) recurso).getUbicacion();
-            System.out.println("La ubicación del recurso con ID " + recursoId + " es: " + ubicacion);
-        } else {
-            System.out.println("El recurso con ID " + recursoId + " no tiene información de ubicación.");
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
+            if (recurso instanceof Localizable) {
+                String ubicacion = ((Localizable) recurso).getUbicacion();
+                System.out.println("La ubicación del recurso con ID " + recursoId + " es: " + ubicacion);
+            } else {
+                System.out.println("El recurso con ID " + recursoId + " no tiene información de ubicación.");
+            }
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -385,6 +394,7 @@ public class Consola {
             opcion = consola.scanner.nextLine();
             consola.ejecutarOpcion(opcion);
         } while (!opcion.equals("8"));
-    }
 
-}
+        consola.cerrarScanner();
+    }
+    }

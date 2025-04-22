@@ -1,24 +1,21 @@
 package src;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GestorUsuarios {
-    private Map<String, Usuario> usuarios;
-
-    public GestorUsuarios() {
-        this.usuarios = new HashMap<>();
-    }
+    private List<Usuario> usuarios = new ArrayList<>();
 
     public void agregarUsuario(Usuario usuario) {
-        this.usuarios.put(usuario.getId(), usuario);
+        usuarios.add(usuario);
     }
 
-    public Usuario obtenerUsuario(String id) {
-        return usuarios.get(id);
-    }
-
-    public void eliminarUsuario(String id) {
-        this.usuarios.remove(id);
+    public Usuario obtenerUsuario(String id) throws UsuarioNoEncontradoException {
+        for (Usuario usuario : usuarios) {
+            if (usuario.getId().equals(id)) {
+                return usuario;
+            }
+        }
+        throw new UsuarioNoEncontradoException("No se encontró ningún usuario con el ID: " + id);
     }
 }
