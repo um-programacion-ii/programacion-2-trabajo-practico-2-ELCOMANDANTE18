@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Consola {
     private Scanner scanner;
@@ -131,6 +132,64 @@ public class Consola {
             System.out.println("No se encontró ningún recurso con el ID: " + id);
         }
     }
+
+    private void mostrarMenuBusqueda() {
+        System.out.println("\n--- Menú de Búsqueda de Recursos ---");
+        System.out.println("1. Buscar por Título");
+        System.out.println("2. Buscar por Categoría");
+        System.out.println("3. Listar todos los recursos"); // Podemos añadir esto aquí
+        System.out.println("4. Volver al menú principal");
+        System.out.print("Seleccione una opción de búsqueda: ");
+        String opcionBusqueda = scanner.nextLine();
+        ejecutarOpcionBusqueda(opcionBusqueda);
+    }
+
+    private void ejecutarOpcionBusqueda(String opcionBusqueda) {
+        switch (opcionBusqueda) {
+            case "1":
+                buscarPorTitulo(); // Llamada al nuevo método de búsqueda por título
+                break;
+            case "2":
+                // Implementar búsqueda por categoría (Issue GRC-Unificado-3)
+                System.out.println("Búsqueda por categoría (próximamente).");
+                break;
+            case "3":
+                listarTodosLosRecursos(); // Implementación básica para listar
+                break;
+            case "4":
+                System.out.println("Volviendo al menú principal.");
+                break;
+            default:
+                System.out.println("Opción de búsqueda inválida.");
+        }
+    }
+
+    private void buscarPorTitulo() {
+        System.out.print("Ingrese el título a buscar: ");
+        String tituloBusqueda = scanner.nextLine();
+        List<RecursoDigital> resultados = gestorRecursos.buscarRecursosPorTitulo(tituloBusqueda);
+        if (resultados.isEmpty()) {
+            System.out.println("No se encontraron recursos con el título: " + tituloBusqueda);
+        } else {
+            System.out.println("\n--- Resultados de la búsqueda por título: \"" + tituloBusqueda + "\" ---");
+            for (RecursoDigital recurso : resultados) {
+                System.out.println("ID: " + recurso.getId() + ", Título: " + recurso.getTitulo());
+            }
+        }
+    }
+
+    private void listarTodosLosRecursos() {
+        List<RecursoDigital> todosLosRecursos = gestorRecursos.getRecursos();
+        if (todosLosRecursos.isEmpty()) {
+            System.out.println("No hay recursos disponibles en la biblioteca.");
+        } else {
+            System.out.println("\n--- Listado de todos los recursos ---");
+            for (RecursoDigital recurso : todosLosRecursos) {
+                System.out.println("ID: " + recurso.getId() + ", Título: " + recurso.getTitulo());
+            }
+        }
+    }
+
     private void agregarNuevoRecurso() {
         System.out.println("\n--- Agregar Nuevo Recurso ---");
         System.out.println("Seleccione el tipo de recurso a agregar:");
@@ -158,49 +217,6 @@ public class Consola {
                 break;
             default:
                 System.out.println("Opción inválida.");
-        }
-    }
-    private void mostrarMenuBusqueda() {
-        System.out.println("\n--- Menú de Búsqueda de Recursos ---");
-        System.out.println("1. Buscar por Título");
-        System.out.println("2. Buscar por Categoría");
-        System.out.println("3. Listar todos los recursos"); // Podemos añadir esto aquí
-        System.out.println("4. Volver al menú principal");
-        System.out.print("Seleccione una opción de búsqueda: ");
-        String opcionBusqueda = scanner.nextLine();
-        ejecutarOpcionBusqueda(opcionBusqueda);
-    }
-
-    private void ejecutarOpcionBusqueda(String opcionBusqueda) {
-        switch (opcionBusqueda) {
-            case "1":
-                // Implementar búsqueda por título (Issue GRC-Unificado-2)
-                System.out.println("Búsqueda por título (próximamente).");
-                break;
-            case "2":
-                // Implementar búsqueda por categoría (Issue GRC-Unificado-3)
-                System.out.println("Búsqueda por categoría (próximamente).");
-                break;
-            case "3":
-                listarTodosLosRecursos(); // Implementación básica para listar
-                break;
-            case "4":
-                System.out.println("Volviendo al menú principal.");
-                break;
-            default:
-                System.out.println("Opción de búsqueda inválida.");
-        }
-    }
-
-    private void listarTodosLosRecursos() {
-        List<RecursoDigital> todosLosRecursos = gestorRecursos.getRecursos();
-        if (todosLosRecursos.isEmpty()) {
-            System.out.println("No hay recursos disponibles en la biblioteca.");
-        } else {
-            System.out.println("\n--- Listado de todos los recursos ---");
-            for (RecursoDigital recurso : todosLosRecursos) {
-                System.out.println("ID: " + recurso.getId() + ", Título: " + recurso.getTitulo());
-            }
         }
     }
 
@@ -301,7 +317,5 @@ public class Consola {
             opcion = consola.scanner.nextLine();
             consola.ejecutarOpcion(opcion);
         } while (!opcion.equals("8"));
-
-        consola.cerrarScanner();
     }
 }
