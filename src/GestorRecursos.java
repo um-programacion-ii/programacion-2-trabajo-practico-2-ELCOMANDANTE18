@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 
 
 public class GestorRecursos {
-    private List<RecursoDigital> recursos;
-    private Map<String, Queue<Reserva>> reservas;
-    private ServicioNotificaciones servicioNotificaciones;
+    private final List<RecursoDigital> recursos;
+    private final Map<String, Queue<Reserva>> reservas;
+    private final ServicioNotificaciones servicioNotificaciones;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
@@ -47,7 +47,9 @@ public class GestorRecursos {
         }
         return resultados;
     }
-    public void reservar(RecursoDigital recurso, Usuario usuario) {
+
+    public synchronized void reservar(RecursoDigital recurso, Usuario usuario) {
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para reservar el recurso " + recurso.getTitulo());
         if (recurso instanceof Reservable) {
             if (((Reservable) recurso).estaDisponibleParaReserva(usuario)) {
                 String recursoId = recurso.getId();
@@ -66,8 +68,11 @@ public class GestorRecursos {
         } else {
             System.out.println("El recurso " + recurso.getTitulo() + " no se puede reservar.");
         }
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Liberando lock para reservar el recurso " + recurso.getTitulo());
     }
-    public void cancelarReserva(RecursoDigital recurso, Usuario usuario) {
+
+    public synchronized void cancelarReserva(RecursoDigital recurso, Usuario usuario) {
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para cancelar la reserva del recurso " + recurso.getTitulo());
         String recursoId = recurso.getId();
         if (reservas.containsKey(recursoId)) {
             Queue<Reserva> colaReservas = reservas.get(recursoId);
@@ -77,9 +82,14 @@ public class GestorRecursos {
         } else {
             System.out.println("No se encontró reserva para el recurso " + recurso.getTitulo() + " del usuario " + usuario.getNombre() + ".");
         }
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Liberando lock para cancelar la reserva del recurso " + recurso.getTitulo());
     }
-    public Queue<Reserva> obtenerReservas(String recursoId) {
-        return reservas.get(recursoId);
+
+    public synchronized Queue<Reserva> obtenerReservas(String recursoId) {
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para obtener las reservas del recurso con ID " + recursoId);
+        Queue<Reserva> reservasRecurso = reservas.get(recursoId);
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Liberando lock para obtener las reservas del recurso con ID " + recursoId);
+        return reservasRecurso;
     }
 
     public List<RecursoDigital> buscarRecursosPorCategoria(CategoriaRecurso categoria) {
@@ -101,7 +111,8 @@ public class GestorRecursos {
         throw new RecursoNoDisponibleException("No se encontró el recurso con ID: " + id);
     }
 
-    public void prestar(Prestable recurso, Usuario usuario) {
+    public synchronized void prestar(Prestable recurso, Usuario usuario) {
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para prestar el recurso " + ((RecursoDigital) recurso).getTitulo());
         if (recurso.isDisponible()) {
             recurso.prestar(usuario);
             // Crear y enviar notificación de préstamo
@@ -110,9 +121,11 @@ public class GestorRecursos {
         } else {
             System.out.println("El recurso " + ((RecursoDigital) recurso).getTitulo() + " no está disponible.");
         }
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Liberando lock para prestar el recurso " + ((RecursoDigital) recurso).getTitulo());
     }
 
-    public void devolver(RecursoDigital recurso, Usuario usuario) {
+    public synchronized void devolver(RecursoDigital recurso, Usuario usuario) {
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para devolver el recurso " + recurso.getTitulo());
         if (recurso instanceof Prestable) {
             ((Prestable) recurso).devolver(usuario);
             // Crear y enviar notificación de devolución
@@ -135,6 +148,7 @@ public class GestorRecursos {
         } else {
             System.out.println("El recurso " + recurso.getTitulo() + " no se puede prestar.");
         }
+        System.out.println("Hilo " + Thread.currentThread().getName() + ": Liberando lock para devolver el recurso " + recurso.getTitulo());
     }
 
     public void ordenarRecursos(Comparator<RecursoDigital> comparator) {
@@ -153,9 +167,14 @@ public class GestorRecursos {
         executorService.submit(() -> servicioNotificaciones.enviarNotificacion(notificacion));
     }
 
-    public void setServicioNotificaciones(ServicioNotificaciones servicioNotificaciones) {
-        this.servicioNotificaciones = servicioNotificaciones;
+    public ServicioNotificaciones getServicioNotificaciones() {
+        return this.servicioNotificaciones;
     }
+
+    // ELIMINAR ESTE MÉTODO
+    // public void setServicioNotificaciones(ServicioNotificaciones servicioNotificaciones) {
+    //     this.servicioNotificaciones = servicioNotificaciones;
+    // }
 
     public void shutdown() {
         executorService.shutdown();
