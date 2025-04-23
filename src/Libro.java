@@ -1,6 +1,6 @@
 package src;
 
-public class Libro extends RecursoDigital implements Prestable, Localizable {
+public class Libro extends RecursoDigital implements Prestable, Localizable, Reservable {
     private String autor;
     private String isbn;
     private String ubicacion;
@@ -40,6 +40,21 @@ public class Libro extends RecursoDigital implements Prestable, Localizable {
     @Override
     public String getUbicacion() {
         return ubicacion;
+    }
+
+    @Override
+    public boolean estaDisponibleParaReserva(Usuario usuario) {
+        return this.getEstado() == EstadoRecurso.DISPONIBLE; // Un libro puede reservarse si está disponible
+    }
+
+    @Override
+    public void notificarReservaExitosa(Usuario usuario) {
+        super.notificarReservaExitosa(usuario);
+    }
+
+    @Override
+    public boolean isDisponible() {
+        return this.getEstado() == EstadoRecurso.DISPONIBLE;
     }
 
     @Override

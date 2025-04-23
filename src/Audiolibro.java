@@ -1,6 +1,6 @@
 package src;
 
-public class Audiolibro extends RecursoDigital implements Prestable, Localizable {
+public class Audiolibro extends RecursoDigital implements Prestable, Localizable, Reservable {
     private String narrador;
     private String duracion;
     private String ubicacion;
@@ -40,6 +40,22 @@ public class Audiolibro extends RecursoDigital implements Prestable, Localizable
     @Override
     public String getUbicacion() {
         return ubicacion;
+    }
+
+    @Override
+    public boolean estaDisponibleParaReserva(Usuario usuario) {
+        return this.getEstado() != EstadoRecurso.PRESTADO; // Accede al estado usando el getter
+    }
+
+    @Override
+    public void notificarReservaExitosa(Usuario usuario) {
+        super.notificarReservaExitosa(usuario);
+    }
+
+    // Añade esta implementación:
+    @Override
+    public boolean isDisponible() {
+        return this.getEstado() == EstadoRecurso.DISPONIBLE; // Accede al estado usando el getter
     }
 
     @Override
