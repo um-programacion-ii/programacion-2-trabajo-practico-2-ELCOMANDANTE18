@@ -17,13 +17,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-
 public class GestorRecursos {
     private final List<RecursoDigital> recursos;
     private final Map<String, Queue<Reserva>> reservas;
     private final ServicioNotificaciones servicioNotificaciones;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+    private final Map<String, Integer> contadorPrestamos = new HashMap<>(); // Nuevo mapa para contar préstamos
 
     public GestorRecursos(ServicioNotificaciones servicioNotificaciones) {
         this.recursos = new ArrayList<>();
@@ -31,12 +31,11 @@ public class GestorRecursos {
         this.servicioNotificaciones = servicioNotificaciones;
     }
 
-
     public void agregarRecurso(RecursoDigital recurso) {
         this.recursos.add(recurso);
+        contadorPrestamos.put(recurso.getId(), 0); // Inicializar contador en 0 al agregar recurso
         System.out.println("Recurso '" + recurso.getTitulo() + "' agregado al sistema.");
     }
-    // ... (otros métodos existentes) ...
 
     public List<RecursoDigital> buscarRecursosPorTitulo(String titulo) {
         List<RecursoDigital> resultados = new ArrayList<>();
@@ -111,10 +110,14 @@ public class GestorRecursos {
         throw new RecursoNoDisponibleException("No se encontró el recurso con ID: " + id);
     }
 
+
     public synchronized void prestar(Prestable recurso, Usuario usuario) {
         System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para prestar el recurso " + ((RecursoDigital) recurso).getTitulo());
         if (recurso.isDisponible()) {
             recurso.prestar(usuario);
+            // Incrementar el contador de préstamos
+            String recursoId = ((RecursoDigital) recurso).getId();
+            contadorPrestamos.put(recursoId, contadorPrestamos.getOrDefault(recursoId, 0) + 1);
             // Crear y enviar notificación de préstamo
             NotificacionPrestamo notificacion = new NotificacionPrestamo(usuario, (RecursoDigital) recurso, LocalDateTime.now().format(FORMATTER));
             enviarNotificacionAsincrona(notificacion);
@@ -175,6 +178,16 @@ public class GestorRecursos {
     // public void setServicioNotificaciones(ServicioNotificaciones servicioNotificaciones) {
     //     this.servicioNotificaciones = servicioNotificaciones;
     // }
+
+    public Map<String, Integer> getContadorPrestamos() {
+        return contadorPrestamos;
+    }
+
+    public List<Map.Entry<String, Integer>> generarReporteRecursosMasPrestados() {
+        return contadorPrestamos.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .collect(Collectors.toList());
+    }
 
     public void shutdown() {
         executorService.shutdown();

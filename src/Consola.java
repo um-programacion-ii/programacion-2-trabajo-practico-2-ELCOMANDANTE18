@@ -33,20 +33,19 @@ public class Consola {
         this.resultadosBusqueda = new ArrayList<>(); // Inicializar la lista de resultados
         inicializarOpcionesRecursos();
 
-        creadoresRecursos.put("libro", (s, sn) -> crearLibroDesdeInput(s, sn));
+        creadoresRecursos.put("1", (Scanner s, ServicioNotificaciones sn) -> crearLibroDesdeInput(s, sn));
+        creadoresRecursos.put("2", (Scanner s, ServicioNotificaciones sn) -> crearRevistaDesdeInput(s, sn));
+        creadoresRecursos.put("3", (Scanner s, ServicioNotificaciones sn) -> crearAudiolibroDesdeInput(s, sn));
     }
 
     private void inicializarOpcionesRecursos() {
-        creadoresRecursos.put("1", (s, sn) -> crearLibroDesdeInput(s, sn));
         tiposRecursos.put(1, "Libro");
-        creadoresRecursos.put("2", (s, sn) -> crearRevistaDesdeInput(s, sn));
         tiposRecursos.put(2, "Revista");
-        creadoresRecursos.put("3", (s, sn) -> crearAudiolibroDesdeInput(s, sn));
         tiposRecursos.put(3, "Audiolibro");
     }
 
-    public void mostrarMenu() {
-        System.out.println("\n--- Menú ---");
+    private void mostrarMenu() {
+        System.out.println("--- Menú ---");
         System.out.println("1. Agregar recurso");
         System.out.println("2. Buscar recurso por título");
         System.out.println("3. Buscar recurso por categoría");
@@ -54,7 +53,9 @@ public class Consola {
         System.out.println("5. Devolver recurso");
         System.out.println("6. Reservar recurso");
         System.out.println("7. Cancelar reserva");
-        System.out.println("8. Mostrar reservas de recurso"); // Nueva opción
+        System.out.println("8. Mostrar reservas de recurso");
+        System.out.println("9. Generar Reportes");
+        System.out.println("10. Gestionar Usuarios"); // Nueva opción
         System.out.println("0. Salir");
         System.out.print("Seleccione una opción: ");
     }
@@ -62,11 +63,106 @@ public class Consola {
     public void ejecutarOpcion(String opcionStr) {
         try {
             int opcion = Integer.parseInt(opcionStr);
-            ejecutarAccion(opcion);
+            switch (opcion) {
+                case 1:
+                    agregarRecurso();
+                    break;
+                case 2:
+                    buscarPorTitulo();
+                    break;
+                case 3:
+                    buscarPorCategoria();
+                    break;
+                case 4:
+                    prestarRecurso();
+                    break;
+                case 5:
+                    devolverRecurso();
+                    break;
+                case 6:
+                    reservarRecursoConsola();
+                    break;
+                case 7:
+                    cancelarReservaConsola();
+                    break;
+                case 8:
+                    mostrarReservasDeRecurso();
+                    break;
+                case 9:
+                    generarReportes();
+                    break;
+                case 10: // Nueva opción para gestionar usuarios
+                    gestionarUsuarios();
+                    break;
+                case 0:
+                    ejecutar = false;
+                    System.out.println("Saliendo del sistema.");
+                    gestorRecursos.shutdown();
+                    break;
+                default:
+                    System.out.println("Opción inválida. Por favor, ingrese un número entre 0 y 10.");
+            }
         } catch (NumberFormatException e) {
             System.out.println("Entrada inválida. Por favor, ingrese un número.");
         }
     }
+
+    private void gestionarUsuarios() {
+        int opcionUsuario;
+        do {
+            System.out.println("\n--- Gestión de Usuarios ---");
+            System.out.println("1. Agregar Usuario");
+            System.out.println("2. Listar Usuarios");
+            System.out.println("0. Volver al menú principal");
+            System.out.print("Ingrese una opción: ");
+            String opcionUsuarioStr = scanner.nextLine();
+            try {
+                opcionUsuario = Integer.parseInt(opcionUsuarioStr);
+                switch (opcionUsuario) {
+                    case 1:
+                        agregarUsuarioDesdeInput();
+                        break;
+                    case 2:
+                        listarUsuarios();
+                        break;
+                    case 0:
+                        System.out.println("Volviendo al menú principal.");
+                        break;
+                    default:
+                        System.out.println("Opción inválida. Intente nuevamente.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Entrada inválida. Por favor, ingrese un número.");
+                opcionUsuario = -1; // Para que el bucle continúe
+            }
+            System.out.println();
+        } while (opcionUsuario != 0);
+    }
+
+    private void agregarUsuarioDesdeInput() {
+        System.out.println("\n--- Agregar Nuevo Usuario ---");
+        System.out.print("Ingrese el ID del usuario: ");
+        String id = scanner.nextLine();
+        System.out.print("Ingrese el nombre del usuario: ");
+        String nombre = scanner.nextLine();
+        System.out.print("Ingrese el email del usuario: "); // Solicitar el email
+        String email = scanner.nextLine();
+        Usuario nuevoUsuario = new Usuario(nombre, id, email); // Pasar el nombre primero, luego id y email
+        gestorUsuarios.agregarUsuario(nuevoUsuario);
+        System.out.println("Usuario con ID " + nuevoUsuario.getId() + " agregado.");
+    }
+    private void listarUsuarios() {
+        System.out.println("\n--- Listado de Usuarios ---");
+        List<Usuario> usuarios = gestorUsuarios.getUsuarios();
+        if (usuarios.isEmpty()) {
+            System.out.println("No hay usuarios registrados en el sistema.");
+        } else {
+            for (Usuario usuario : usuarios) {
+                System.out.println("ID: " + usuario.getId() + ", Nombre: " + usuario.getNombre());
+            }
+        }
+    }
+
     private void agregarRecurso() {
         System.out.println("\n--- Agregar Nuevo Recurso ---");
         System.out.println("Seleccione el tipo de recurso a agregar:");
@@ -163,103 +259,6 @@ public class Consola {
         }
     }
 
-    private void ejecutarAccion(int opcion) {
-        switch (opcion) {
-            case 1:
-                agregarRecurso(); // Asumiendo que tu método para agregar se llama así
-                break;
-            case 2:
-                buscarPorTitulo(); // Asumiendo que tu método para buscar por título se llama así
-                break;
-            case 3:
-                buscarPorCategoria(); // Asumiendo que tu método para buscar por categoría se llama así
-                break;
-            case 4:
-                prestarRecurso(); // Asumiendo que tu método para prestar se llama así
-                break;
-            case 5:
-                devolverRecurso(); // Asumiendo que tu método para devolver se llama así
-                break;
-            case 6:
-                reservarRecursoConsola(); // Asumiendo que tu método para reservar se llama así
-                break;
-            case 7:
-                cancelarReservaConsola(); // Asumiendo que tu método para cancelar reserva se llama así
-                break;
-            case 8:
-                mostrarReservasDeRecurso(); // Asumiendo que tu método para mostrar reservas se llama así
-                break;
-            case 0:
-                System.out.println("Saliendo del sistema.");
-                ejecutar = false;
-                break;
-            default:
-                System.out.println("Opción inválida. Por favor, intente de nuevo.");
-        }
-    }
-
-    public Libro crearLibroDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
-        System.out.println("Ingrese el título del libro:");
-        String titulo = scanner.nextLine();
-        System.out.println("Ingrese el ID del libro:");
-        String id = scanner.nextLine();
-        System.out.println("Ingrese el autor del libro:");
-        String autor = scanner.nextLine();
-        System.out.println("Ingrese el ISBN del libro:");
-        String isbn = scanner.nextLine();
-        System.out.println("Ingrese la ubicación del libro:");
-        String ubicacion = scanner.nextLine();
-        System.out.println("Ingrese la categoría del libro (EJEMPLO: NOVELA, CIENCIA_FICCION, etc.):");
-        String categoriaStr = scanner.nextLine().toUpperCase().replace(" ", "_");
-        CategoriaRecurso categoria = CategoriaRecurso.valueOf(categoriaStr);
-
-        return new Libro(titulo, id, categoria, servicioNotificaciones, autor, isbn, ubicacion);
-    }
-
-    private Revista crearRevistaDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
-        System.out.print("Ingrese el título de la revista: ");
-        String titulo = scanner.nextLine();
-        System.out.print("Ingrese el ID de la revista: ");
-        String id = scanner.nextLine();
-        System.out.print("Ingrese el número de la revista: ");
-        String numero = scanner.nextLine();
-        System.out.print("Ingrese el ISSN de la revista: ");
-        String issn = scanner.nextLine();
-        System.out.print("Ingrese la ubicación de la revista: ");
-        String ubicacion = scanner.nextLine();
-        return new Revista(titulo, id, numero, issn, ubicacion, servicioNotificaciones);
-    }
-
-    private Audiolibro crearAudiolibroDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
-        System.out.print("Ingrese el título del audiolibro: ");
-        String titulo = scanner.nextLine();
-        System.out.print("Ingrese el ID del audiolibro: ");
-        String id = scanner.nextLine();
-        System.out.print("Ingrese el narrador del audiolibro: ");
-        String narrador = scanner.nextLine();
-        System.out.print("Ingrese la duración del audiolibro (en horas, ejemplo: 1.5): ");
-        String duracionStr = scanner.nextLine();
-        double duracion = Double.parseDouble(duracionStr); // Convertir String a double
-        System.out.print("Ingrese la ubicación del audiolibro: ");
-        String ubicacion = scanner.nextLine();
-        System.out.print("Ingrese la categoría del audiolibro (EJEMPLO: FICCIÓN, NO_FICCIÓN, etc.): ");
-        String categoriaStr = scanner.nextLine().toUpperCase().replace(" ", "_");
-        CategoriaRecurso categoria = CategoriaRecurso.valueOf(categoriaStr);
-
-        return new Audiolibro(titulo, id, categoria, servicioNotificaciones, narrador, duracion, ubicacion);
-    }
-
-    private void mostrarRecursoPorId() {
-        System.out.print("Ingrese el ID del recurso a mostrar: ");
-        String id = scanner.nextLine();
-        try {
-            RecursoDigital recurso = gestorRecursos.obtenerRecurso(id);
-            System.out.println("\n--- Detalles del Recurso ---");
-            recurso.mostrarDetalles();
-        } catch (RecursoNoDisponibleException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
     private void prestarRecurso() {
         System.out.print("Ingrese el ID del recurso a prestar: ");
         String recursoId = scanner.nextLine();
@@ -270,7 +269,7 @@ public class Consola {
                 String usuarioId = scanner.nextLine();
                 try {
                     Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
-                    ((Prestable) recurso).prestar(usuario);
+                    gestorRecursos.prestar((Prestable) recurso, usuario);
                 } catch (UsuarioNoEncontradoException e) {
                     System.out.println("Error: " + e.getMessage());
                 }
@@ -363,7 +362,6 @@ public class Consola {
         }
     }
 
-
     private void mostrarUbicacion() {
         System.out.print("Ingrese el ID del recurso para mostrar su ubicación: ");
         String recursoId = scanner.nextLine();
@@ -378,6 +376,104 @@ public class Consola {
         } catch (RecursoNoDisponibleException e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    private void generarReportes() {
+        int opcionReporte;
+        do {
+            System.out.println("--- Generación de Reportes ---");
+            System.out.println("1. Recursos Más Prestados");
+            System.out.println("0. Volver al menú principal");
+            System.out.print("Ingrese una opción: ");
+            String opcionReporteStr = scanner.nextLine();
+            try {
+                opcionReporte = Integer.parseInt(opcionReporteStr);
+                switch (opcionReporte) {
+                    case 1:
+                        mostrarReporteRecursosMasPrestados();
+                        break;
+                    case 0:
+                        System.out.println("Volviendo al menú principal.");
+                        break;
+                    default:
+                        System.out.println("Opción inválida. Intente nuevamente.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Entrada inválida. Por favor, ingrese un número.");
+                opcionReporte = -1; // Para que el bucle continúe
+            }
+            System.out.println();
+        } while (opcionReporte != 0);
+    }
+
+    private void mostrarReporteRecursosMasPrestados() {
+        System.out.println("--- Reporte de Recursos Más Prestados ---");
+        List<Map.Entry<String, Integer>> reporte = gestorRecursos.generarReporteRecursosMasPrestados();
+        if (reporte.isEmpty()) {
+            System.out.println("No hay datos de préstamos disponibles.");
+        } else {
+            System.out.println("Título del Recurso\t\tCantidad de Préstamos");
+            System.out.println("-----------------------------------------");
+            for (Map.Entry<String, Integer> entry : reporte) {
+                try {
+                    RecursoDigital recurso = gestorRecursos.obtenerRecurso(entry.getKey());
+                    System.out.printf("%-30s\t\t%d%n", recurso.getTitulo(), entry.getValue());
+                } catch (RecursoNoDisponibleException e) {
+                    System.out.println("Error al obtener el título del recurso con ID: " + entry.getKey());
+                }
+            }
+        }
+    }
+
+    public Libro crearLibroDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
+        System.out.println("Ingrese el título del libro:");
+        String titulo = scanner.nextLine();
+        System.out.println("Ingrese el ID del libro:");
+        String id = scanner.nextLine();
+        System.out.println("Ingrese el autor del libro:");
+        String autor = scanner.nextLine();
+        System.out.println("Ingrese el ISBN del libro:");
+        String isbn = scanner.nextLine();
+        System.out.println("Ingrese la ubicación del libro:");
+        String ubicacion = scanner.nextLine();
+        System.out.println("Ingrese la categoría del libro (EJEMPLO: NOVELA, CIENCIA_FICCION, etc.):");
+        String categoriaStr = scanner.nextLine().toUpperCase().replace(" ", "_");
+        CategoriaRecurso categoria = CategoriaRecurso.valueOf(categoriaStr);
+
+        return new Libro(titulo, id, categoria, servicioNotificaciones, autor, isbn, ubicacion);
+    }
+
+    private Revista crearRevistaDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
+        System.out.print("Ingrese el título de la revista: ");
+        String titulo = scanner.nextLine();
+        System.out.print("Ingrese el ID de la revista: ");
+        String id = scanner.nextLine();
+        System.out.print("Ingrese el número de la revista: ");
+        String numero = scanner.nextLine();
+        System.out.print("Ingrese el ISSN de la revista: ");
+        String issn = scanner.nextLine();
+        System.out.print("Ingrese la ubicación de la revista: ");
+        String ubicacion = scanner.nextLine();
+        return new Revista(titulo, id, numero, issn, ubicacion, servicioNotificaciones);
+    }
+
+    private Audiolibro crearAudiolibroDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
+        System.out.print("Ingrese el título del audiolibro: ");
+        String titulo = scanner.nextLine();
+        System.out.print("Ingrese el ID del audiolibro: ");
+        String id = scanner.nextLine();
+        System.out.print("Ingrese el narrador del audiolibro: ");
+        String narrador = scanner.nextLine();
+        System.out.print("Ingrese la duración del audiolibro (en horas, ejemplo: 1.5): ");
+        String duracionStr = scanner.nextLine();
+        double duracion = Double.parseDouble(duracionStr); // Convertir String a double
+        System.out.print("Ingrese la ubicación del audiolibro: ");
+        String ubicacion = scanner.nextLine();
+        System.out.print("Ingrese la categoría del audiolibro (EJEMPLO: FICCIÓN, NO_FICCIÓN, etc.): ");
+        String categoriaStr = scanner.nextLine().toUpperCase().replace(" ", "_");
+        CategoriaRecurso categoria = CategoriaRecurso.valueOf(categoriaStr);
+
+        return new Audiolibro(titulo, id, categoria, servicioNotificaciones, narrador, duracion, ubicacion);
     }
 
     public void cerrarScanner() {
@@ -397,6 +493,37 @@ public class Consola {
 
     public static void main(String[] args) {
         Consola consola = new Consola();
-        consola.ejecutar();
+
+        // Crear algunos libros precargados
+        Libro libro1 = new Libro("El Señor de los Anillos", "LSA001", CategoriaRecurso.LIBRO, consola.servicioNotificaciones, "J.R.R. Tolkien", "978-0618260274", "Estantería A, Sección 1");
+        Libro libro2 = new Libro("Cien años de soledad", "CAS002", CategoriaRecurso.LIBRO, consola.servicioNotificaciones, "Gabriel García Márquez", "978-0307350528", "Estantería B, Sección 2");
+        Libro libro3 = new Libro("1984", "NIN003", CategoriaRecurso.LIBRO, consola.servicioNotificaciones, "George Orwell", "978-0451524935", "Estantería A, Sección 3");
+
+        consola.gestorRecursos.agregarRecurso(libro1);
+        consola.gestorRecursos.agregarRecurso(libro2);
+        consola.gestorRecursos.agregarRecurso(libro3);
+
+        // Crear algunos usuarios precargados
+        Usuario usuario1 = new Usuario("123", "Ana Pérez", "ana.perez@email.com");
+        Usuario usuario2 = new Usuario("456", "Carlos López", "carlos.lopez@email.com");
+
+        consola.gestorUsuarios.agregarUsuario(usuario1);
+        consola.gestorUsuarios.agregarUsuario(usuario2);
+
+        // Simular algunos préstamos
+        if (libro1 instanceof Prestable && usuario1 != null) {
+            consola.gestorRecursos.prestar((Prestable) libro1, usuario1);
+            consola.gestorRecursos.prestar((Prestable) libro1, usuario1); // Prestarlo varias veces
+        }
+        if (libro2 instanceof Prestable && usuario2 != null) {
+            consola.gestorRecursos.prestar((Prestable) libro2, usuario2);
+        }
+        if (libro3 instanceof Prestable && usuario1 != null) {
+            consola.gestorRecursos.prestar((Prestable) libro3, usuario1);
+        }
+
+        consola.ejecutar(); // Iniciar la consola después de la carga inicial
     }
-}
+    }
+
+
