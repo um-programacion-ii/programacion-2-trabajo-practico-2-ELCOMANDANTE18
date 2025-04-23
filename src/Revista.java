@@ -1,6 +1,6 @@
 package src;
 
-public class Revista extends RecursoDigital implements Localizable {
+public class Revista extends RecursoDigital implements Localizable, Reservable {
     private String numero;
     private String issn;
     private String ubicacion;
@@ -19,6 +19,19 @@ public class Revista extends RecursoDigital implements Localizable {
     public String getUbicacion() {
         return ubicacion;
     }
+
+    @Override
+    public boolean estaDisponibleParaReserva(Usuario usuario) {
+        // Lógica para verificar si el usuario puede reservar este libro
+        // Por ejemplo, verificar si ya lo tiene prestado o reservado
+        return this.getEstado() != EstadoRecurso.PRESTADO; // Ejemplo simple
+    }
+
+    @Override
+    public void notificarReservaExitosa(Usuario usuario) {
+        super.notificarReservaExitosa(usuario);
+    }
+
 
     @Override
     public void mostrarDetalles() {

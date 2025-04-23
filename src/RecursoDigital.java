@@ -47,4 +47,22 @@ public abstract class RecursoDigital {
 
     // Método abstracto que las subclases deben implementar
     public abstract void mostrarDetalles();
+
+    // Métodos para notificaciones
+    public void notificarPrestamo(Usuario usuario) {
+        servicioNotificaciones.enviarNotificacion(usuario, "Recurso '" + titulo + "' prestado.");
+    }
+
+    public void notificarDevolucion(Usuario usuario) {
+        servicioNotificaciones.enviarNotificacion(usuario, "Recurso '" + titulo + "' devuelto.");
+    }
+
+    public void notificarReservaExitosa(Usuario usuario) {
+        servicioNotificaciones.enviarNotificacion(usuario, "Reserva exitosa para '" + titulo + "'.");
+    }
+
+    // Añade este método:
+    public void notificarDisponibilidad(Usuario usuario) {
+        servicioNotificaciones.enviarNotificacion(usuario, "Recurso '" + titulo + "' ahora disponible para reserva/préstamo.");
+    }
 }

@@ -3,13 +3,13 @@ package src;
 import java.time.LocalDateTime;
 
 public class Reserva {
-    private RecursoDigital recurso;
     private Usuario usuario;
+    private RecursoDigital recurso;
     private LocalDateTime fechaReserva;
 
     public Reserva(RecursoDigital recurso, Usuario usuario, LocalDateTime fechaReserva) {
-        this.recurso = recurso;
         this.usuario = usuario;
+        this.recurso = recurso;
         this.fechaReserva = fechaReserva;
     }
 
