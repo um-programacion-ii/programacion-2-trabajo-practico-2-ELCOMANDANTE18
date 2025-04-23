@@ -1,11 +1,19 @@
 package src;
 
+import src.NotificacionPrestamo;
+import src.NotificacionDevolucion;
+import src.NotificacionReserva;
+import src.NotificacionCancelacionReserva;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public abstract class RecursoDigital {
     private String titulo;
     private String id;
     private CategoriaRecurso categoria;
     private ServicioNotificaciones servicioNotificaciones;
     private EstadoRecurso estado;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public RecursoDigital(String titulo, String id, CategoriaRecurso categoria, ServicioNotificaciones servicioNotificaciones) {
         this.titulo = titulo;
@@ -14,7 +22,10 @@ public abstract class RecursoDigital {
         this.servicioNotificaciones = servicioNotificaciones;
         this.estado = EstadoRecurso.DISPONIBLE; // Estado inicial por defecto
     }
-
+    public void notificarDisponibilidad(Usuario usuario) {
+        NotificacionDisponibilidad notificacion = new NotificacionDisponibilidad(usuario, this, LocalDateTime.now().format(FORMATTER));
+        servicioNotificaciones.enviarNotificacion(notificacion);
+    }
     // Getters
     public String getTitulo() {
         return titulo;
@@ -50,19 +61,24 @@ public abstract class RecursoDigital {
 
     // Métodos para notificaciones
     public void notificarPrestamo(Usuario usuario) {
-        servicioNotificaciones.enviarNotificacion(usuario, "Recurso '" + titulo + "' prestado.");
+        NotificacionPrestamo notificacion = new NotificacionPrestamo(usuario, this, LocalDateTime.now().format(FORMATTER));
+        servicioNotificaciones.enviarNotificacion(notificacion);
     }
 
     public void notificarDevolucion(Usuario usuario) {
-        servicioNotificaciones.enviarNotificacion(usuario, "Recurso '" + titulo + "' devuelto.");
+        NotificacionDevolucion notificacion = new NotificacionDevolucion(usuario, this, LocalDateTime.now().format(FORMATTER));
+        servicioNotificaciones.enviarNotificacion(notificacion);
     }
 
     public void notificarReservaExitosa(Usuario usuario) {
-        servicioNotificaciones.enviarNotificacion(usuario, "Reserva exitosa para '" + titulo + "'.");
+        NotificacionReserva notificacion = new NotificacionReserva(usuario, this, LocalDateTime.now().format(FORMATTER));
+        servicioNotificaciones.enviarNotificacion(notificacion);
     }
 
-    // Añade este método:
-    public void notificarDisponibilidad(Usuario usuario) {
-        servicioNotificaciones.enviarNotificacion(usuario, "Recurso '" + titulo + "' ahora disponible para reserva/préstamo.");
+
+
+    public void notificarCancelacionReserva(Usuario usuario) {
+        NotificacionCancelacionReserva notificacion = new NotificacionCancelacionReserva(usuario, this, LocalDateTime.now().format(FORMATTER));
+        servicioNotificaciones.enviarNotificacion(notificacion);
     }
 }
