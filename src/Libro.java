@@ -4,22 +4,21 @@ public class Libro extends RecursoDigital implements Prestable, Localizable {
     private String autor;
     private String isbn;
     private String ubicacion;
-    private EstadoRecurso estado; // Nuevo atributo
 
     public Libro(String titulo, String id, String autor, String isbn, String ubicacion, ServicioNotificaciones servicioNotificaciones) {
         super(titulo, id, CategoriaRecurso.LIBRO, servicioNotificaciones);
         this.autor = autor;
         this.isbn = isbn;
         this.ubicacion = ubicacion;
-        this.estado = EstadoRecurso.DISPONIBLE; // Inicializar estado
+        // El estado se inicializa en RecursoDigital
     }
 
-    // Getters para autor, isbn, ubicacion y estado
+    // Getters para autor, isbn y ubicacion
 
     @Override
     public void prestar(Usuario usuario) {
-        if (estado == EstadoRecurso.DISPONIBLE) {
-            estado = EstadoRecurso.PRESTADO;
+        if (getEstado() == EstadoRecurso.DISPONIBLE) {
+            setEstado(EstadoRecurso.PRESTADO);
             getServicioNotificaciones().enviarNotificacion(usuario, "Préstamo del libro: " + getTitulo());
             System.out.println("Libro '" + getTitulo() + "' prestado a " + usuario.getNombre());
         } else {
@@ -29,8 +28,8 @@ public class Libro extends RecursoDigital implements Prestable, Localizable {
 
     @Override
     public void devolver(Usuario usuario) {
-        if (estado == EstadoRecurso.PRESTADO) {
-            estado = EstadoRecurso.DISPONIBLE;
+        if (getEstado() == EstadoRecurso.PRESTADO) {
+            setEstado(EstadoRecurso.DISPONIBLE);
             getServicioNotificaciones().enviarNotificacion(usuario, "Devolución del libro: " + getTitulo());
             System.out.println("Libro '" + getTitulo() + "' devuelto por " + usuario.getNombre());
         } else {
@@ -45,10 +44,13 @@ public class Libro extends RecursoDigital implements Prestable, Localizable {
 
     @Override
     public void mostrarDetalles() {
-        super.mostrarDetalles();
+        // No llamar a super.mostrarDetalles() aquí
+        System.out.println("Título: " + getTitulo());
+        System.out.println("ID: " + getId());
+        System.out.println("Categoría: " + getCategoria());
         System.out.println("Autor: " + autor);
         System.out.println("ISBN: " + isbn);
         System.out.println("Ubicación: " + ubicacion);
-        System.out.println("Estado: " + estado);
+        System.out.println("Estado: " + getEstado());
     }
 }
