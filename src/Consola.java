@@ -12,33 +12,37 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Consola {
-    private Scanner scanner;
     private GestorRecursos gestorRecursos;
-    private GestorUsuarios gestorUsuarios;
-    private ServicioNotificaciones servicioNotificaciones;
-    private Map<String, Supplier<RecursoDigital>> creadoresRecursos;
-    private Map<String, String> tiposRecursos;
-    private List<RecursoDigital> resultadosBusqueda; // Para almacenar los resultados de la búsqueda
+    private GestorUsuarios gestorUsuarios; // Declaración del atributo de instancia
+    private ServicioNotificaciones servicioNotificaciones; // Declaración del atributo de instancia
+    private Scanner scanner;
+    private Map<String, FuncionCrearRecurso> creadoresRecursos;
+    private Map<Integer, String> tiposRecursos;
+    private List<RecursoDigital> resultadosBusqueda; // Inicializar la lista de resultados
     private boolean ejecutar = true;
 
-    public Consola(GestorRecursos gestorRecursos, GestorUsuarios gestorUsuarios, ServicioNotificaciones servicioNotificaciones) {
-        this.scanner = new Scanner(System.in);
-        this.gestorRecursos = gestorRecursos;
-        this.gestorUsuarios = gestorUsuarios;
-        this.servicioNotificaciones = servicioNotificaciones;
+    public Consola() {
+        ServicioNotificaciones consolaNotificaciones = new ServicioNotificacionesConsola();
+        gestorRecursos = new GestorRecursos(consolaNotificaciones);
+        gestorUsuarios = new GestorUsuarios(); // Inicialización de gestorUsuarios
+        this.gestorUsuarios = gestorUsuarios; // Asignación al atributo de instancia
+        this.servicioNotificaciones = consolaNotificaciones; // Asignación de servicioNotificaciones
+        scanner = new Scanner(System.in);
         this.creadoresRecursos = new HashMap<>();
         this.tiposRecursos = new HashMap<>();
         this.resultadosBusqueda = new ArrayList<>(); // Inicializar la lista de resultados
         inicializarOpcionesRecursos();
+
+        creadoresRecursos.put("libro", (s, sn) -> crearLibroDesdeInput(s, sn));
     }
 
     private void inicializarOpcionesRecursos() {
-        creadoresRecursos.put("1", this::crearLibroDesdeInput);
-        tiposRecursos.put("1", "Libro");
-        creadoresRecursos.put("2", this::crearRevistaDesdeInput);
-        tiposRecursos.put("2", "Revista");
-        creadoresRecursos.put("3", this::crearAudiolibroDesdeInput);
-        tiposRecursos.put("3", "Audiolibro");
+        creadoresRecursos.put("1", (s, sn) -> crearLibroDesdeInput(s, sn));
+        tiposRecursos.put(1, "Libro");
+        creadoresRecursos.put("2", (s, sn) -> crearRevistaDesdeInput(s, sn));
+        tiposRecursos.put(2, "Revista");
+        creadoresRecursos.put("3", (s, sn) -> crearAudiolibroDesdeInput(s, sn));
+        tiposRecursos.put(3, "Audiolibro");
     }
 
     public void mostrarMenu() {
@@ -72,24 +76,13 @@ public class Consola {
         System.out.print("Ingrese su opción: ");
         String opcion = scanner.nextLine();
 
-        switch (opcion) {
-            case "1":
-                Libro nuevoLibro = crearLibroDesdeInput();
-                gestorRecursos.agregarRecurso(nuevoLibro);
-                System.out.println("Libro agregado con ID: " + nuevoLibro.getId());
-                break;
-            case "2":
-                Revista nuevaRevista = crearRevistaDesdeInput();
-                gestorRecursos.agregarRecurso(nuevaRevista);
-                System.out.println("Revista agregada con ID: " + nuevaRevista.getId());
-                break;
-            case "3":
-                Audiolibro nuevoAudiolibro = crearAudiolibroDesdeInput();
-                gestorRecursos.agregarRecurso(nuevoAudiolibro);
-                System.out.println("Audiolibro agregado con ID: " + nuevoAudiolibro.getId());
-                break;
-            default:
-                System.out.println("Opción inválida.");
+        FuncionCrearRecurso creador = creadoresRecursos.get(opcion);
+        if (creador != null) {
+            RecursoDigital nuevoRecurso = creador.crear(scanner, servicioNotificaciones);
+            gestorRecursos.agregarRecurso(nuevoRecurso);
+            System.out.println(nuevoRecurso.getCategoria().getNombre() + " agregado con ID: " + nuevoRecurso.getId());
+        } else {
+            System.out.println("Opción inválida.");
         }
     }
     private void mostrarOpcionesOrdenamiento(List<RecursoDigital> listaAOrdenar) {
@@ -205,21 +198,25 @@ public class Consola {
         }
     }
 
-    private Libro crearLibroDesdeInput() {
-        System.out.print("Ingrese el título del libro: ");
+    public Libro crearLibroDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
+        System.out.println("Ingrese el título del libro:");
         String titulo = scanner.nextLine();
-        System.out.print("Ingrese el ID del libro: ");
+        System.out.println("Ingrese el ID del libro:");
         String id = scanner.nextLine();
-        System.out.print("Ingrese el autor del libro: ");
+        System.out.println("Ingrese el autor del libro:");
         String autor = scanner.nextLine();
-        System.out.print("Ingrese el ISBN del libro: ");
+        System.out.println("Ingrese el ISBN del libro:");
         String isbn = scanner.nextLine();
-        System.out.print("Ingrese la ubicación del libro: ");
+        System.out.println("Ingrese la ubicación del libro:");
         String ubicacion = scanner.nextLine();
-        return new Libro(titulo, id, autor, isbn, ubicacion, servicioNotificaciones);
+        System.out.println("Ingrese la categoría del libro (EJEMPLO: NOVELA, CIENCIA_FICCION, etc.):");
+        String categoriaStr = scanner.nextLine().toUpperCase().replace(" ", "_");
+        CategoriaRecurso categoria = CategoriaRecurso.valueOf(categoriaStr);
+
+        return new Libro(titulo, id, categoria, servicioNotificaciones, autor, isbn, ubicacion);
     }
 
-    private Revista crearRevistaDesdeInput() {
+    private Revista crearRevistaDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
         System.out.print("Ingrese el título de la revista: ");
         String titulo = scanner.nextLine();
         System.out.print("Ingrese el ID de la revista: ");
@@ -233,18 +230,23 @@ public class Consola {
         return new Revista(titulo, id, numero, issn, ubicacion, servicioNotificaciones);
     }
 
-    private Audiolibro crearAudiolibroDesdeInput() {
+    private Audiolibro crearAudiolibroDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
         System.out.print("Ingrese el título del audiolibro: ");
         String titulo = scanner.nextLine();
         System.out.print("Ingrese el ID del audiolibro: ");
         String id = scanner.nextLine();
         System.out.print("Ingrese el narrador del audiolibro: ");
         String narrador = scanner.nextLine();
-        System.out.print("Ingrese la duración del audiolibro: ");
-        String duracion = scanner.nextLine();
+        System.out.print("Ingrese la duración del audiolibro (en horas, ejemplo: 1.5): ");
+        String duracionStr = scanner.nextLine();
+        double duracion = Double.parseDouble(duracionStr); // Convertir String a double
         System.out.print("Ingrese la ubicación del audiolibro: ");
         String ubicacion = scanner.nextLine();
-        return new Audiolibro(titulo, id, narrador, duracion, ubicacion, servicioNotificaciones);
+        System.out.print("Ingrese la categoría del audiolibro (EJEMPLO: FICCIÓN, NO_FICCIÓN, etc.): ");
+        String categoriaStr = scanner.nextLine().toUpperCase().replace(" ", "_");
+        CategoriaRecurso categoria = CategoriaRecurso.valueOf(categoriaStr);
+
+        return new Audiolibro(titulo, id, categoria, servicioNotificaciones, narrador, duracion, ubicacion);
     }
 
     private void mostrarRecursoPorId() {
@@ -394,19 +396,7 @@ public class Consola {
     }
 
     public static void main(String[] args) {
-        GestorRecursos gestorRecursos = new GestorRecursos();
-        GestorUsuarios gestorUsuarios = new GestorUsuarios();
-        ServicioNotificacionesConsola servicioNotificacionesConsola = new ServicioNotificacionesConsola();
-        Consola consola = new Consola(gestorRecursos, gestorUsuarios, servicioNotificacionesConsola);
-
-        consola.gestorUsuarios.agregarUsuario(new Usuario("Juan Perez", "1", "juan.perez@email.com"));
-        consola.gestorUsuarios.agregarUsuario(new Usuario("Maria Lopez", "2", "maria.lopez@email.com"));
-
-        // Agregar algunos recursos para probar
-        consola.gestorRecursos.agregarRecurso(new Libro("El Señor de los Anillos", "L001", "J.R.R. Tolkien", "978-0618260274", "Estantería A1", servicioNotificacionesConsola));
-        consola.gestorRecursos.agregarRecurso(new Revista("National Geographic", "R001", "Vol. 240 No. 3", "0027-9358", "Hemeroteca 2", servicioNotificacionesConsola));
-        consola.gestorRecursos.agregarRecurso(new Audiolibro("Harry Potter y la Piedra Filosofal", "A001", "Stephen Fry", "12 horas", "Sección Audiolibros", servicioNotificacionesConsola));
-
+        Consola consola = new Consola();
         consola.ejecutar();
     }
 }

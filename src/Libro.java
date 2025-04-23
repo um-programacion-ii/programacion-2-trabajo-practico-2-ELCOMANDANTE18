@@ -1,71 +1,82 @@
 package src;
 
+import src.NotificacionReserva;
+import src.NotificacionCancelacionReserva;
+import src.NotificacionDisponibilidad;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class Libro extends RecursoDigital implements Prestable, Localizable, Reservable {
     private String autor;
     private String isbn;
     private String ubicacion;
+    private boolean disponible = true;
+    private Usuario usuarioPrestamo;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public Libro(String titulo, String id, String autor, String isbn, String ubicacion, ServicioNotificaciones servicioNotificaciones) {
-        super(titulo, id, CategoriaRecurso.LIBRO, servicioNotificaciones);
+    public Libro(String titulo, String id, CategoriaRecurso categoria, ServicioNotificaciones servicioNotificaciones, String autor, String isbn, String ubicacion) {
+        super(titulo, id, categoria, servicioNotificaciones);
         this.autor = autor;
         this.isbn = isbn;
         this.ubicacion = ubicacion;
-        // El estado se inicializa en RecursoDigital
     }
 
-    // Getters para autor, isbn y ubicacion
+    @Override
+    public boolean isDisponible() {
+        return disponible;
+    }
 
     @Override
     public void prestar(Usuario usuario) {
-        if (getEstado() == EstadoRecurso.DISPONIBLE) {
-            setEstado(EstadoRecurso.PRESTADO);
-            getServicioNotificaciones().enviarNotificacion(usuario, "Préstamo del libro: " + getTitulo());
-            System.out.println("Libro '" + getTitulo() + "' prestado a " + usuario.getNombre());
+        if (disponible) {
+            disponible = false;
+            usuarioPrestamo = usuario;
+            notificarPrestamo(usuario);
+            System.out.println("Libro '" + getTitulo() + "' prestado a " + usuario.getNombre() + ".");
         } else {
-            System.out.println("El libro '" + getTitulo() + "' no está disponible para préstamo.");
+            System.out.println("El libro '" + getTitulo() + "' no está disponible.");
         }
     }
 
     @Override
     public void devolver(Usuario usuario) {
-        if (getEstado() == EstadoRecurso.PRESTADO) {
-            setEstado(EstadoRecurso.DISPONIBLE);
-            getServicioNotificaciones().enviarNotificacion(usuario, "Devolución del libro: " + getTitulo());
-            System.out.println("Libro '" + getTitulo() + "' devuelto por " + usuario.getNombre());
+        if (!disponible && usuarioPrestamo != null && usuarioPrestamo.equals(usuario)) {
+            disponible = true;
+            usuarioPrestamo = null;
+            notificarDevolucion(usuario);
+            System.out.println("Libro '" + getTitulo() + "' devuelto por " + usuario.getNombre() + ".");
         } else {
-            System.out.println("El libro '" + getTitulo() + "' no estaba prestado a este usuario.");
+            System.out.println("No se puede devolver el libro '" + getTitulo() + "'.");
         }
+    }
+
+    @Override
+    public boolean estaDisponibleParaReserva(Usuario usuario) {
+        return disponible && (usuarioPrestamo == null || !usuarioPrestamo.equals(usuario));
+    }
+
+    @Override
+    public void notificarReservaExitosa(Usuario usuario) {
+        getServicioNotificaciones().enviarNotificacion(new NotificacionReserva(usuario, this, LocalDateTime.now().format(FORMATTER)));
+    }
+
+    @Override
+    public void notificarCancelacionReserva(Usuario usuario) {
+        getServicioNotificaciones().enviarNotificacion(new NotificacionCancelacionReserva(usuario, this, LocalDateTime.now().format(FORMATTER)));
+    }
+
+    @Override
+    public void notificarDisponibilidad(Usuario usuario) {
+        getServicioNotificaciones().enviarNotificacion(new NotificacionDisponibilidad(usuario, this, LocalDateTime.now().format(FORMATTER)));
+    }
+
+    @Override
+    public void mostrarDetalles() {
+        System.out.println("Libro - Título: " + getTitulo() + ", ID: " + getId() + ", Autor: " + autor + ", ISBN: " + isbn + ", Ubicación: " + ubicacion + ", Disponible: " + disponible);
     }
 
     @Override
     public String getUbicacion() {
         return ubicacion;
-    }
-
-    @Override
-    public boolean estaDisponibleParaReserva(Usuario usuario) {
-        return this.getEstado() == EstadoRecurso.DISPONIBLE; // Un libro puede reservarse si está disponible
-    }
-
-    @Override
-    public void notificarReservaExitosa(Usuario usuario) {
-        super.notificarReservaExitosa(usuario);
-    }
-
-    @Override
-    public boolean isDisponible() {
-        return this.getEstado() == EstadoRecurso.DISPONIBLE;
-    }
-
-    @Override
-    public void mostrarDetalles() {
-        // No llamar a super.mostrarDetalles() aquí
-        System.out.println("Título: " + getTitulo());
-        System.out.println("ID: " + getId());
-        System.out.println("Categoría: " + getCategoria());
-        System.out.println("Autor: " + autor);
-        System.out.println("ISBN: " + isbn);
-        System.out.println("Ubicación: " + ubicacion);
-        System.out.println("Estado: " + getEstado());
     }
 }
