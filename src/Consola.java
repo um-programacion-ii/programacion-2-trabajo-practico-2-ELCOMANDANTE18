@@ -43,11 +43,13 @@ public class Consola {
         System.out.println("1. Agregar Recurso");
         System.out.println("2. Mostrar Recurso por ID");
         System.out.println("3. Prestar Recurso");
-        System.out.println("4. Reservar Recurso");
-        System.out.println("5. Cancelar Reserva");
-        System.out.println("6. Mostrar Ubicación");
-        System.out.println("7. Buscar Recursos"); // Opción para la búsqueda
-        System.out.println("8. Salir");
+        System.out.println("4. Devolver Recurso"); // Nueva opción
+        System.out.println("5. Reservar Recurso");
+        System.out.println("6. Cancelar Reserva");
+        System.out.println("7. Mostrar Ubicación");
+        System.out.println("8. Buscar Recursos");
+        System.out.println("9. Mostrar Estado del Recurso"); // Nueva opción
+        System.out.println("10. Salir");
         System.out.print("Seleccione una opción: ");
     }
 
@@ -60,21 +62,27 @@ public class Consola {
                 mostrarRecursoPorId();
                 break;
             case "3":
-                prestarRecurso();
+                prestarRecursoConsola(); // Nuevo método para la consola
                 break;
             case "4":
-                reservarRecurso();
+                devolverRecursoConsola(); // Nuevo método para la consola
                 break;
             case "5":
-                cancelarReserva();
+                reservarRecurso();
                 break;
             case "6":
-                mostrarUbicacion();
+                cancelarReserva();
                 break;
             case "7":
-                mostrarMenuBusqueda(); // Llamada al nuevo menú de búsqueda
+                mostrarUbicacion();
                 break;
             case "8":
+                mostrarMenuBusqueda();
+                break;
+            case "9":
+                mostrarEstadoRecurso(); // Nuevo método
+                break;
+            case "10":
                 System.out.println("Saliendo del sistema.");
                 break;
             default:
@@ -135,7 +143,52 @@ public class Consola {
             System.out.println("Error: " + e.getMessage());
         }
     }
+    private void prestarRecursoConsola() {
+        System.out.print("Ingrese el ID del recurso a prestar: ");
+        String recursoId = scanner.nextLine();
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
+            System.out.print("Ingrese su ID de usuario: ");
+            String usuarioId = scanner.nextLine();
+            try {
+                Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
+                gestorRecursos.prestar(recurso, usuario);
+            } catch (UsuarioNoEncontradoException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
 
+    private void devolverRecursoConsola() {
+        System.out.print("Ingrese el ID del recurso a devolver: ");
+        String recursoId = scanner.nextLine();
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
+            System.out.print("Ingrese su ID de usuario: ");
+            String usuarioId = scanner.nextLine();
+            try {
+                Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
+                gestorRecursos.devolver(recurso, usuario);
+            } catch (UsuarioNoEncontradoException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void mostrarEstadoRecurso() {
+        System.out.print("Ingrese el ID del recurso para ver su estado: ");
+        String recursoId = scanner.nextLine();
+        try {
+            RecursoDigital recurso = gestorRecursos.obtenerRecurso(recursoId);
+            System.out.println("El estado del recurso con ID " + recurso.getId() + " es: " + recurso.getEstado());
+        } catch (RecursoNoDisponibleException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
     private void mostrarMenuBusqueda() {
         System.out.println("\n--- Menú de Búsqueda de Recursos ---");
         System.out.println("1. Buscar por Título");
@@ -318,11 +371,13 @@ public class Consola {
             if (recurso instanceof Reservable) {
                 System.out.print("Ingrese su ID de usuario: ");
                 String usuarioId = scanner.nextLine();
-                try {
-                    Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
-                    ((Reservable) recurso).reservar(usuario);
-                } catch (UsuarioNoEncontradoException e) {
-                    System.out.println("Error: " + e.getMessage());
+                {
+                    try {
+                        Usuario usuario = gestorUsuarios.obtenerUsuario(usuarioId);
+                        ((Reservable) recurso).reservar(usuario);
+                    } catch (UsuarioNoEncontradoException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
                 }
             } else {
                 System.out.println("El recurso con ID " + recursoId + " no se puede reservar.");
@@ -393,8 +448,8 @@ public class Consola {
             consola.mostrarMenu();
             opcion = consola.scanner.nextLine();
             consola.ejecutarOpcion(opcion);
-        } while (!opcion.equals("8"));
+        } while (!opcion.equals("10"));
 
         consola.cerrarScanner();
     }
-    }
+}

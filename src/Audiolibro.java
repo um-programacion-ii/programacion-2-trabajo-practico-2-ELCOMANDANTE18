@@ -4,43 +4,21 @@ public class Audiolibro extends RecursoDigital implements Prestable, Localizable
     private String narrador;
     private String duracion;
     private String ubicacion;
-    private EstadoRecurso estado; // Nuevo atributo
 
     public Audiolibro(String titulo, String id, String narrador, String duracion, String ubicacion, ServicioNotificaciones servicioNotificaciones) {
         super(titulo, id, CategoriaRecurso.AUDIOLIBRO, servicioNotificaciones);
         this.narrador = narrador;
         this.duracion = duracion;
         this.ubicacion = ubicacion;
-        this.estado = EstadoRecurso.DISPONIBLE; // Inicializar estado
+        // El estado se inicializa en RecursoDigital
     }
 
-    // Getters para narrador, duracion, ubicacion y estado
-
-    public String getNarrador() {
-        return narrador;
-    }
-
-    public String getDuracion() {
-        return duracion;
-    }
-
-    @Override
-    public String getUbicacion() {
-        return ubicacion;
-    }
-
-    public EstadoRecurso getEstado() {
-        return estado;
-    }
-
-    public void setEstado(EstadoRecurso estado) {
-        this.estado = estado;
-    }
+    // Getters para narrador, duracion y ubicacion
 
     @Override
     public void prestar(Usuario usuario) {
-        if (estado == EstadoRecurso.DISPONIBLE) {
-            estado = EstadoRecurso.PRESTADO;
+        if (getEstado() == EstadoRecurso.DISPONIBLE) {
+            setEstado(EstadoRecurso.PRESTADO);
             getServicioNotificaciones().enviarNotificacion(usuario, "Préstamo del audiolibro: " + getTitulo());
             System.out.println("Audiolibro '" + getTitulo() + "' prestado a " + usuario.getNombre());
         } else {
@@ -50,8 +28,8 @@ public class Audiolibro extends RecursoDigital implements Prestable, Localizable
 
     @Override
     public void devolver(Usuario usuario) {
-        if (estado == EstadoRecurso.PRESTADO) {
-            estado = EstadoRecurso.DISPONIBLE;
+        if (getEstado() == EstadoRecurso.PRESTADO) {
+            setEstado(EstadoRecurso.DISPONIBLE);
             getServicioNotificaciones().enviarNotificacion(usuario, "Devolución del audiolibro: " + getTitulo());
             System.out.println("Audiolibro '" + getTitulo() + "' devuelto por " + usuario.getNombre());
         } else {
@@ -60,11 +38,19 @@ public class Audiolibro extends RecursoDigital implements Prestable, Localizable
     }
 
     @Override
+    public String getUbicacion() {
+        return ubicacion;
+    }
+
+    @Override
     public void mostrarDetalles() {
-        super.mostrarDetalles();
+        // No llamar a super.mostrarDetalles() aquí
+        System.out.println("Título: " + getTitulo());
+        System.out.println("ID: " + getId());
+        System.out.println("Categoría: " + getCategoria());
         System.out.println("Narrador: " + narrador);
         System.out.println("Duración: " + duracion);
         System.out.println("Ubicación: " + ubicacion);
-        System.out.println("Estado: " + estado);
+        System.out.println("Estado: " + getEstado());
     }
 }

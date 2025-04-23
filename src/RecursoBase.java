@@ -1,12 +1,11 @@
 package src;
 
-public abstract class RecursoBase implements RecursoDigital {
+public abstract class RecursoBase extends RecursoDigital {
     private String titulo;
     private String id;
 
-    public RecursoBase(String titulo, String id) {
-        this.titulo = titulo;
-        this.id = id;
+    public RecursoBase(String titulo, String id, CategoriaRecurso categoria, ServicioNotificaciones servicioNotificaciones) {
+        super(titulo, id, categoria, servicioNotificaciones);
     }
 
     @Override
@@ -20,5 +19,5 @@ public abstract class RecursoBase implements RecursoDigital {
     }
 
     @Override
-    public abstract void mostrarDetalles(); // Este método debe ser abstracto
+    public abstract void mostrarDetalles();
 }
