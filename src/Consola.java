@@ -8,29 +8,31 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Consola {
     private GestorRecursos gestorRecursos;
-    private GestorUsuarios gestorUsuarios; // Declaración del atributo de instancia
-    private ServicioNotificaciones servicioNotificaciones; // Declaración del atributo de instancia
+    private GestorUsuarios gestorUsuarios;
+    private ServicioNotificaciones servicioNotificaciones;
     private Scanner scanner;
     private Map<String, FuncionCrearRecurso> creadoresRecursos;
     private Map<Integer, String> tiposRecursos;
-    private List<RecursoDigital> resultadosBusqueda; // Inicializar la lista de resultados
+    private List<RecursoDigital> resultadosBusqueda;
     private boolean ejecutar = true;
 
     public Consola() {
         ServicioNotificaciones consolaNotificaciones = new ServicioNotificacionesConsola();
         gestorRecursos = new GestorRecursos(consolaNotificaciones);
-        gestorUsuarios = new GestorUsuarios(); // Inicialización de gestorUsuarios
-        this.gestorUsuarios = gestorUsuarios; // Asignación al atributo de instancia
-        this.servicioNotificaciones = consolaNotificaciones; // Asignación de servicioNotificaciones
+        gestorUsuarios = new GestorUsuarios();
+        this.gestorUsuarios = gestorUsuarios;
+        this.servicioNotificaciones = consolaNotificaciones;
         scanner = new Scanner(System.in);
         this.creadoresRecursos = new HashMap<>();
         this.tiposRecursos = new HashMap<>();
-        this.resultadosBusqueda = new ArrayList<>(); // Inicializar la lista de resultados
+        this.resultadosBusqueda = new ArrayList<>();
         inicializarOpcionesRecursos();
 
         creadoresRecursos.put("1", (Scanner s, ServicioNotificaciones sn) -> crearLibroDesdeInput(s, sn));
@@ -55,30 +57,9 @@ public class Consola {
         System.out.println("7. Cancelar reserva");
         System.out.println("8. Mostrar reservas de recurso");
         System.out.println("9. Generar Reportes");
-        System.out.println("10. Gestionar Usuarios"); // Nueva opción
+        System.out.println("10. Gestionar Usuarios");
         System.out.println("0. Salir");
         System.out.print("Seleccione una opción: ");
-    }
-
-    private void mostrarReporteUsuariosMasPrestadores() {
-        System.out.println("--- Reporte de Usuarios con Más Préstamos ---");
-        Map<Usuario, Integer> conteoPrestamos = gestorRecursos.contarPrestamosPorUsuario();
-
-        if (conteoPrestamos.isEmpty()) {
-            System.out.println("No hay datos de préstamos disponibles.");
-        } else {
-            List<Map.Entry<Usuario, Integer>> listaOrdenada = conteoPrestamos.entrySet().stream()
-                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                    .collect(Collectors.toList());
-
-            System.out.println("ID Usuario\tNombre Usuario\tCantidad de Préstamos");
-            System.out.println("--------------------------------------------------");
-            for (Map.Entry<Usuario, Integer> entry : listaOrdenada) {
-                Usuario usuario = entry.getKey();
-                Integer cantidad = entry.getValue();
-                System.out.printf("%-10s\t%-20s\t%d%n", usuario.getId(), usuario.getNombre(), cantidad);
-            }
-        }
     }
 
     public void ejecutarOpcion(String opcionStr) {
@@ -112,7 +93,7 @@ public class Consola {
                 case 9:
                     generarReportes();
                     break;
-                case 10: // Nueva opción para gestionar usuarios
+                case 10:
                     gestionarUsuarios();
                     break;
                 case 0:
@@ -154,7 +135,7 @@ public class Consola {
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Entrada inválida. Por favor, ingrese un número.");
-                opcionUsuario = -1; // Para que el bucle continúe
+                opcionUsuario = -1;
             }
             System.out.println();
         } while (opcionUsuario != 0);
@@ -166,12 +147,13 @@ public class Consola {
         String id = scanner.nextLine();
         System.out.print("Ingrese el nombre del usuario: ");
         String nombre = scanner.nextLine();
-        System.out.print("Ingrese el email del usuario: "); // Solicitar el email
+        System.out.print("Ingrese el email del usuario: ");
         String email = scanner.nextLine();
-        Usuario nuevoUsuario = new Usuario(nombre, id, email); // Pasar el nombre primero, luego id y email
+        Usuario nuevoUsuario = new Usuario(nombre, id, email);
         gestorUsuarios.agregarUsuario(nuevoUsuario);
         System.out.println("Usuario con ID " + nuevoUsuario.getId() + " agregado.");
     }
+
     private void listarUsuarios() {
         System.out.println("\n--- Listado de Usuarios ---");
         List<Usuario> usuarios = gestorUsuarios.getUsuarios();
@@ -202,6 +184,7 @@ public class Consola {
             System.out.println("Opción inválida.");
         }
     }
+
     private void mostrarOpcionesOrdenamiento(List<RecursoDigital> listaAOrdenar) {
         if (!listaAOrdenar.isEmpty()) {
             System.out.println("\n--- Opciones de Ordenamiento ---");
@@ -233,11 +216,12 @@ public class Consola {
             System.out.println("No hay resultados para ordenar.");
         }
     }
+
     private void buscarPorTitulo() {
         System.out.print("Ingrese el título a buscar: ");
         String tituloBusqueda = scanner.nextLine();
         List<RecursoDigital> resultados = gestorRecursos.buscarRecursosPorTitulo(tituloBusqueda);
-        this.resultadosBusqueda = resultados; // Guardar resultados para posible ordenamiento
+        this.resultadosBusqueda = resultados;
         if (resultados.isEmpty()) {
             System.out.println("No se encontraron recursos con el título: " + tituloBusqueda);
         } else {
@@ -246,11 +230,13 @@ public class Consola {
             mostrarOpcionesOrdenamiento(resultados);
         }
     }
+
     private void mostrarResultados(List<RecursoDigital> resultados) {
         for (RecursoDigital recurso : resultados) {
             System.out.println("ID: " + recurso.getId() + ", Título: " + recurso.getTitulo() + ", Categoría: " + recurso.getCategoria());
         }
     }
+
     private void buscarPorCategoria() {
         System.out.println("\n--- Buscar por Categoría ---");
         CategoriaRecurso[] categorias = CategoriaRecurso.values();
@@ -264,7 +250,7 @@ public class Consola {
             if (indiceSeleccionado >= 0 && indiceSeleccionado < categorias.length) {
                 CategoriaRecurso categoriaSeleccionada = categorias[indiceSeleccionado];
                 List<RecursoDigital> resultados = gestorRecursos.buscarRecursosPorCategoria(categoriaSeleccionada);
-                this.resultadosBusqueda = resultados; // Guardar resultados para posible ordenamiento
+                this.resultadosBusqueda = resultados;
                 if (resultados.isEmpty()) {
                     System.out.println("No se encontraron recursos en la categoría: " + categoriaSeleccionada.getNombre());
                 } else {
@@ -404,7 +390,7 @@ public class Consola {
         do {
             System.out.println("--- Generación de Reportes ---");
             System.out.println("1. Recursos Más Prestados");
-            System.out.println("2. Usuarios con Más Préstamos"); // Nueva opción
+            System.out.println("2. Usuarios con Más Préstamos");
             System.out.println("0. Volver al menú principal");
             System.out.print("Ingrese una opción: ");
             String opcionReporteStr = scanner.nextLine();
@@ -412,10 +398,10 @@ public class Consola {
                 opcionReporte = Integer.parseInt(opcionReporteStr);
                 switch (opcionReporte) {
                     case 1:
-                        mostrarReporteRecursosMasPrestados();
+                        mostrarReporteRecursosMasPrestadosAsync();
                         break;
                     case 2:
-                        mostrarReporteUsuariosMasPrestadores(); // Llamada al nuevo método
+                        mostrarReporteUsuariosMasPrestadoresAsync();
                         break;
                     case 0:
                         System.out.println("Volviendo al menú principal.");
@@ -425,29 +411,59 @@ public class Consola {
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Entrada inválida. Por favor, ingrese un número.");
-                opcionReporte = -1; // Para que el bucle continúe
+                opcionReporte = -1;
             }
             System.out.println();
         } while (opcionReporte != 0);
     }
 
-    private void mostrarReporteRecursosMasPrestados() {
-        System.out.println("--- Reporte de Recursos Más Prestados ---");
-        List<Map.Entry<String, Integer>> reporte = gestorRecursos.generarReporteRecursosMasPrestados();
-        if (reporte.isEmpty()) {
-            System.out.println("No hay datos de préstamos disponibles.");
-        } else {
-            System.out.println("Título del Recurso\t\tCantidad de Préstamos");
-            System.out.println("-----------------------------------------");
-            for (Map.Entry<String, Integer> entry : reporte) {
-                try {
-                    RecursoDigital recurso = gestorRecursos.obtenerRecurso(entry.getKey());
-                    System.out.printf("%-30s\t\t%d%n", recurso.getTitulo(), entry.getValue());
-                } catch (RecursoNoDisponibleException e) {
-                    System.out.println("Error al obtener el título del recurso con ID: " + entry.getKey());
+    private void mostrarReporteRecursosMasPrestadosAsync() {
+        System.out.println("Generando reporte de recursos más prestados en segundo plano...");
+        CompletableFuture<List<Map.Entry<String, Integer>>> reporteFuture = gestorRecursos.generarReporteRecursosMasPrestadosAsync();
+
+        reporteFuture.thenAccept(reporte -> {
+            System.out.println("\n--- Reporte de Recursos Más Prestados ---");
+            if (reporte.isEmpty()) {
+                System.out.println("No hay datos de préstamos disponibles.");
+            } else {
+                System.out.println("Título del Recurso\t\tCantidad de Préstamos");
+                System.out.println("-----------------------------------------");
+                for (Map.Entry<String, Integer> entry : reporte) {
+                    try {
+                        RecursoDigital recurso = gestorRecursos.obtenerRecurso(entry.getKey());
+                        System.out.printf("%-30s\t\t%d%n", recurso.getTitulo(), entry.getValue());
+                    } catch (RecursoNoDisponibleException e) {
+                        System.out.println("Error al obtener el título del recurso con ID: " + entry.getKey());
+                    }
                 }
             }
-        }
+        }).exceptionally(ex -> {
+            System.err.println("Error al generar el reporte de recursos más prestados: " + ex.getMessage());
+            return null;
+        });
+    }
+
+    private void mostrarReporteUsuariosMasPrestadoresAsync() {
+        System.out.println("Generando reporte de usuarios con más préstamos en segundo plano...");
+        CompletableFuture<List<Map.Entry<Usuario, Integer>>> reporteFuture = gestorRecursos.generarReporteUsuariosMasPrestadoresAsync();
+
+        reporteFuture.thenAccept(reporte -> {
+            System.out.println("\n--- Reporte de Usuarios con Más Préstamos ---");
+            if (reporte.isEmpty()) {
+                System.out.println("No hay datos de préstamos disponibles.");
+            } else {
+                System.out.println("ID Usuario\tNombre Usuario\tCantidad de Préstamos");
+                System.out.println("--------------------------------------------------");
+                for (Map.Entry<Usuario, Integer> entry : reporte) {
+                    Usuario usuario = entry.getKey();
+                    Integer cantidad = entry.getValue();
+                    System.out.printf("%-10s\t%-20s\t%d%n", usuario.getId(), usuario.getNombre(), cantidad);
+                }
+            }
+        }).exceptionally(ex -> {
+            System.err.println("Error al generar el reporte de usuarios más prestadores: " + ex.getMessage());
+            return null;
+        });
     }
 
     public Libro crearLibroDesdeInput(Scanner scanner, ServicioNotificaciones servicioNotificaciones) {
@@ -491,7 +507,7 @@ public class Consola {
         String narrador = scanner.nextLine();
         System.out.print("Ingrese la duración del audiolibro (en horas, ejemplo: 1.5): ");
         String duracionStr = scanner.nextLine();
-        double duracion = Double.parseDouble(duracionStr); // Convertir String a double
+        double duracion = Double.parseDouble(duracionStr);
         System.out.print("Ingrese la ubicación del audiolibro: ");
         String ubicacion = scanner.nextLine();
         System.out.print("Ingrese la categoría del audiolibro (EJEMPLO: FICCIÓN, NO_FICCIÓN, etc.): ");
@@ -519,7 +535,6 @@ public class Consola {
     public static void main(String[] args) {
         Consola consola = new Consola();
 
-        // Crear algunos libros precargados
         Libro libro1 = new Libro("El Señor de los Anillos", "LSA001", CategoriaRecurso.LIBRO, consola.servicioNotificaciones, "J.R.R. Tolkien", "978-0618260274", "Estantería A, Sección 1");
         Libro libro2 = new Libro("Cien años de soledad", "CAS002", CategoriaRecurso.LIBRO, consola.servicioNotificaciones, "Gabriel García Márquez", "978-0307350528", "Estantería B, Sección 2");
         Libro libro3 = new Libro("1984", "NIN003", CategoriaRecurso.LIBRO, consola.servicioNotificaciones, "George Orwell", "978-0451524935", "Estantería A, Sección 3");
@@ -528,17 +543,15 @@ public class Consola {
         consola.gestorRecursos.agregarRecurso(libro2);
         consola.gestorRecursos.agregarRecurso(libro3);
 
-        // Crear algunos usuarios precargados
         Usuario usuario1 = new Usuario("123", "Ana Pérez", "ana.perez@email.com");
         Usuario usuario2 = new Usuario("456", "Carlos López", "carlos.lopez@email.com");
 
         consola.gestorUsuarios.agregarUsuario(usuario1);
         consola.gestorUsuarios.agregarUsuario(usuario2);
 
-        // Simular algunos préstamos
         if (libro1 instanceof Prestable && usuario1 != null) {
             consola.gestorRecursos.prestar((Prestable) libro1, usuario1);
-            consola.gestorRecursos.prestar((Prestable) libro1, usuario1); // Prestarlo varias veces
+            consola.gestorRecursos.prestar((Prestable) libro1, usuario1);
         }
         if (libro2 instanceof Prestable && usuario2 != null) {
             consola.gestorRecursos.prestar((Prestable) libro2, usuario2);
@@ -547,8 +560,6 @@ public class Consola {
             consola.gestorRecursos.prestar((Prestable) libro3, usuario1);
         }
 
-        consola.ejecutar(); // Iniciar la consola después de la carga inicial
+        consola.ejecutar();
     }
-    }
-
-
+}
