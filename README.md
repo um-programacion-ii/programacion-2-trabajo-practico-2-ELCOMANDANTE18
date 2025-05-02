@@ -6,7 +6,47 @@
 Desarrollar un sistema de gestión de biblioteca digital que implemente los cinco principios SOLID, programación orientada a objetos, y conceptos avanzados de Java. El sistema deberá manejar diferentes tipos de recursos digitales, préstamos, reservas, y notificaciones en tiempo real.
 
 ## 👨‍🎓 Información del Alumno
-- **Nombre y Apellido**: [Nombre y Apellido del Alumno]
+- **Nombre y Apellido**: [Victor Gimenez]
+
+## 🤖 Mi Contribución como IA Colaborativa
+
+## 🎯 Áreas de Enfoque Principal
+
+### 📋 Planificación y Análisis
+- **Refinamiento de Objetivos**: Asegurando claridad y viabilidad en los requisitos
+- **Arquitectura del Sistema**: Estructuración siguiendo principios SOLID
+
+### 💻 Desarrollo Técnico
+- **Implementación de Funcionalidades Core**:
+  - Gestión de recursos
+  - Sistema de usuarios
+  - Módulo de préstamos
+  - Sistema de reservas
+  - Generación de reportes
+
+### 🔄 Integración de Tecnologías Avanzadas
+- **Java Moderno**:
+  - Colecciones dinámicas
+  - Programación funcional con Streams
+  - Manejo robusto de excepciones
+  - Concurrencia avanzada:
+    - ExecutorService
+    - Synchronized blocks
+    - CompletableFuture
+  - Patrones de diseño
+
+### ⚡ Optimización y Rendimiento
+- **Mejoras de Eficiencia**:
+  - Procesamiento en background
+  - Operaciones no bloqueantes
+  - Feedback en tiempo real
+
+### 📚 Documentación y Control
+- **Gestión de Código**:
+  - Mensajes de commit descriptivos
+  - Pull requests detallados
+  - Documentación clara del README
+  - Instrucciones de implementación
 
 ## 📋 Requisitos Adicionales
 
@@ -352,9 +392,63 @@ Crear el sistema de préstamos que utilice hilos y el patrón productor-consumid
 - ✅ Project actualizado
 
 > ⏰ **Fecha de vencimiento**: 23/04/2025 a las 13:00 hs
+### 1. Copiar el Repositorio
 
+Para obtener una copia local del proyecto, puedes usar Git. Abre tu terminal o línea de comandos y ejecuta el siguiente comando:
+
+```bash
+git clone https://github.com/um-programacion-ii/programacion-2-trabajo-practico-2-ELCOMANDANTE18.git
+```
 ## 📚 Recursos Adicionales
 
+# 🤖 Mi Contribución como IA Colaborativa
+
+## 🎯 Áreas de Enfoque Principal
+
+### 📋 Planificación y Análisis
+- **Refinamiento de Objetivos**: Asegurando claridad y viabilidad en los requisitos
+- **Arquitectura del Sistema**: Estructuración siguiendo principios SOLID
+
+### 💻 Desarrollo Técnico
+- **Implementación de Funcionalidades Core**:
+    - Gestión de recursos
+    - Sistema de usuarios
+    - Módulo de préstamos
+    - Sistema de reservas
+    - Generación de reportes
+
+### 🔄 Integración de Tecnologías Avanzadas
+- **Java Moderno**:
+    - Colecciones dinámicas
+    - Programación funcional con Streams
+    - Manejo robusto de excepciones
+    - Concurrencia avanzada:
+        - ExecutorService
+        - Synchronized blocks
+        - CompletableFuture
+    - Patrones de diseño
+
+### ⚡ Optimización y Rendimiento
+- **Mejoras de Eficiencia**:
+    - Procesamiento en background
+    - Operaciones no bloqueantes
+    - Feedback en tiempo real
+
+### 📚 Documentación y Control
+- **Gestión de Código**:
+    - Mensajes de commit descriptivos
+    - Pull requests detallados
+    - Documentación clara del README
+    - Instrucciones de implementación
+### Cómo Usar el Código
+
+#### a. Ejecución (A través de IntelliJ IDEA)
+
+Si estás utilizando IntelliJ IDEA, el proceso es muy sencillo:
+
+1.  **Abrir el Proyecto**: Importa o abre el directorio del proyecto en IntelliJ IDEA.
+2.  **Navegar al Archivo `Consola.java`**: En la ventana del proyecto, ve a la ruta `src/Consola.java`.
+3.  **Ejecutar**: Haz clic derecho sobre el archivo `Consola.java` y selecciona la opción "Run 'Consola.main()'". IntelliJ IDEA compilará y ejecutará la aplicación automáticamente.
 - Documentación oficial de Java 21
 - Guías de estilo de código
 - Ejemplos de implementación concurrente
