@@ -60,6 +60,27 @@ public class Consola {
         System.out.print("Seleccione una opción: ");
     }
 
+    private void mostrarReporteUsuariosMasPrestadores() {
+        System.out.println("--- Reporte de Usuarios con Más Préstamos ---");
+        Map<Usuario, Integer> conteoPrestamos = gestorRecursos.contarPrestamosPorUsuario();
+
+        if (conteoPrestamos.isEmpty()) {
+            System.out.println("No hay datos de préstamos disponibles.");
+        } else {
+            List<Map.Entry<Usuario, Integer>> listaOrdenada = conteoPrestamos.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                    .collect(Collectors.toList());
+
+            System.out.println("ID Usuario\tNombre Usuario\tCantidad de Préstamos");
+            System.out.println("--------------------------------------------------");
+            for (Map.Entry<Usuario, Integer> entry : listaOrdenada) {
+                Usuario usuario = entry.getKey();
+                Integer cantidad = entry.getValue();
+                System.out.printf("%-10s\t%-20s\t%d%n", usuario.getId(), usuario.getNombre(), cantidad);
+            }
+        }
+    }
+
     public void ejecutarOpcion(String opcionStr) {
         try {
             int opcion = Integer.parseInt(opcionStr);
@@ -383,6 +404,7 @@ public class Consola {
         do {
             System.out.println("--- Generación de Reportes ---");
             System.out.println("1. Recursos Más Prestados");
+            System.out.println("2. Usuarios con Más Préstamos"); // Nueva opción
             System.out.println("0. Volver al menú principal");
             System.out.print("Ingrese una opción: ");
             String opcionReporteStr = scanner.nextLine();
@@ -391,6 +413,9 @@ public class Consola {
                 switch (opcionReporte) {
                     case 1:
                         mostrarReporteRecursosMasPrestados();
+                        break;
+                    case 2:
+                        mostrarReporteUsuariosMasPrestadores(); // Llamada al nuevo método
                         break;
                     case 0:
                         System.out.println("Volviendo al menú principal.");

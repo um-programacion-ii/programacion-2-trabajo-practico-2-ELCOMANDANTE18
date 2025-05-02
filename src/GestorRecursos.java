@@ -24,11 +24,21 @@ public class GestorRecursos {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
     private final Map<String, Integer> contadorPrestamos = new HashMap<>(); // Nuevo mapa para contar préstamos
+    private final List<Prestamo> historialPrestamos = new ArrayList<>(); // Añadir esta línea
 
     public GestorRecursos(ServicioNotificaciones servicioNotificaciones) {
         this.recursos = new ArrayList<>();
         this.reservas = new HashMap<>();
         this.servicioNotificaciones = servicioNotificaciones;
+    }
+
+    public Map<Usuario, Integer> contarPrestamosPorUsuario() {
+        Map<Usuario, Integer> conteo = new HashMap<>();
+        for (Prestamo prestamo : historialPrestamos) {
+            Usuario usuario = prestamo.getUsuario();
+            conteo.put(usuario, conteo.getOrDefault(usuario, 0) + 1);
+        }
+        return conteo;
     }
 
     public void agregarRecurso(RecursoDigital recurso) {
@@ -115,9 +125,10 @@ public class GestorRecursos {
         System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para prestar el recurso " + ((RecursoDigital) recurso).getTitulo());
         if (recurso.isDisponible()) {
             recurso.prestar(usuario);
-            // Incrementar el contador de préstamos
             String recursoId = ((RecursoDigital) recurso).getId();
             contadorPrestamos.put(recursoId, contadorPrestamos.getOrDefault(recursoId, 0) + 1);
+            // Registrar el préstamo en el historial
+            historialPrestamos.add(new Prestamo((RecursoDigital) recurso, usuario, LocalDateTime.now()));
             // Crear y enviar notificación de préstamo
             NotificacionPrestamo notificacion = new NotificacionPrestamo(usuario, (RecursoDigital) recurso, LocalDateTime.now().format(FORMATTER));
             enviarNotificacionAsincrona(notificacion);
@@ -174,11 +185,6 @@ public class GestorRecursos {
         return this.servicioNotificaciones;
     }
 
-    // ELIMINAR ESTE MÉTODO
-    // public void setServicioNotificaciones(ServicioNotificaciones servicioNotificaciones) {
-    //     this.servicioNotificaciones = servicioNotificaciones;
-    // }
-
     public Map<String, Integer> getContadorPrestamos() {
         return contadorPrestamos;
     }
@@ -191,5 +197,30 @@ public class GestorRecursos {
 
     public void shutdown() {
         executorService.shutdown();
+    }
+
+    // Clase Prestamo
+    private static class Prestamo {
+        private RecursoDigital recurso;
+        private Usuario usuario;
+        private LocalDateTime fechaPrestamo;
+
+        public Prestamo(RecursoDigital recurso, Usuario usuario, LocalDateTime fechaPrestamo) {
+            this.recurso = recurso;
+            this.usuario = usuario;
+            this.fechaPrestamo = fechaPrestamo;
+        }
+
+        public RecursoDigital getRecurso() {
+            return recurso;
+        }
+
+        public Usuario getUsuario() {
+            return usuario;
+        }
+
+        public LocalDateTime getFechaPrestamo() {
+            return fechaPrestamo;
+        }
     }
 }
