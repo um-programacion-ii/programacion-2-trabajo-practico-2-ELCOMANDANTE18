@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -23,8 +24,8 @@ public class GestorRecursos {
     private final ServicioNotificaciones servicioNotificaciones;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
-    private final Map<String, Integer> contadorPrestamos = new HashMap<>(); // Nuevo mapa para contar préstamos
-    private final List<Prestamo> historialPrestamos = new ArrayList<>(); // Añadir esta línea
+    private final Map<String, Integer> contadorPrestamos = new HashMap<>();
+    private final List<Prestamo> historialPrestamos = new ArrayList<>();
 
     public GestorRecursos(ServicioNotificaciones servicioNotificaciones) {
         this.recursos = new ArrayList<>();
@@ -34,24 +35,52 @@ public class GestorRecursos {
 
     public Map<Usuario, Integer> contarPrestamosPorUsuario() {
         Map<Usuario, Integer> conteo = new HashMap<>();
-        for (Prestamo prestamo : historialPrestamos) {
-            Usuario usuario = prestamo.getUsuario();
-            conteo.put(usuario, conteo.getOrDefault(usuario, 0) + 1);
+        synchronized (historialPrestamos) {
+            for (Prestamo prestamo : historialPrestamos) {
+                Usuario usuario = prestamo.getUsuario();
+                conteo.put(usuario, conteo.getOrDefault(usuario, 0) + 1);
+            }
         }
         return conteo;
     }
 
+    public CompletableFuture<List<Map.Entry<String, Integer>>> generarReporteRecursosMasPrestadosAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            synchronized (contadorPrestamos) {
+                return contadorPrestamos.entrySet().stream()
+                        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                        .collect(Collectors.toList());
+            }
+        }, executorService);
+    }
+
+    public CompletableFuture<List<Map.Entry<Usuario, Integer>>> generarReporteUsuariosMasPrestadoresAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            Map<Usuario, Integer> conteo;
+            synchronized (historialPrestamos) {
+                conteo = contarPrestamosPorUsuario();
+            }
+            return conteo.entrySet().stream()
+                    .sorted(Map.Entry.<Usuario, Integer>comparingByValue(Comparator.reverseOrder()))
+                    .collect(Collectors.toList());
+        }, executorService);
+    }
+
     public void agregarRecurso(RecursoDigital recurso) {
         this.recursos.add(recurso);
-        contadorPrestamos.put(recurso.getId(), 0); // Inicializar contador en 0 al agregar recurso
+        synchronized (contadorPrestamos) {
+            contadorPrestamos.put(recurso.getId(), 0);
+        }
         System.out.println("Recurso '" + recurso.getTitulo() + "' agregado al sistema.");
     }
 
     public List<RecursoDigital> buscarRecursosPorTitulo(String titulo) {
         List<RecursoDigital> resultados = new ArrayList<>();
-        for (RecursoDigital recurso : this.recursos) {
-            if (recurso.getTitulo().toLowerCase().contains(titulo.toLowerCase())) {
-                resultados.add(recurso);
+        synchronized (recursos) {
+            for (RecursoDigital recurso : this.recursos) {
+                if (recurso.getTitulo().toLowerCase().contains(titulo.toLowerCase())) {
+                    resultados.add(recurso);
+                }
             }
         }
         return resultados;
@@ -68,7 +97,6 @@ public class GestorRecursos {
                 reservas.get(recursoId).offer(new Reserva(recurso, usuario, LocalDateTime.now()));
                 recurso.notificarReservaExitosa(usuario);
                 System.out.println("El usuario " + usuario.getNombre() + " ha reservado el recurso " + recurso.getTitulo() + ".");
-                // Crear y enviar notificación de reserva
                 NotificacionReserva notificacion = new NotificacionReserva(usuario, recurso, LocalDateTime.now().format(FORMATTER));
                 enviarNotificacionAsincrona(notificacion);
             } else {
@@ -103,33 +131,38 @@ public class GestorRecursos {
 
     public List<RecursoDigital> buscarRecursosPorCategoria(CategoriaRecurso categoria) {
         List<RecursoDigital> resultados = new ArrayList<>();
-        for (RecursoDigital recurso : this.recursos) {
-            if (recurso.getCategoria() == categoria) {
-                resultados.add(recurso);
+        synchronized (recursos) {
+            for (RecursoDigital recurso : this.recursos) {
+                if (recurso.getCategoria() == categoria) {
+                    resultados.add(recurso);
+                }
             }
         }
         return resultados;
     }
 
     public RecursoDigital obtenerRecurso(String id) throws RecursoNoDisponibleException {
-        for (RecursoDigital recurso : this.recursos) {
-            if (recurso.getId().equals(id)) {
-                return recurso;
+        synchronized (recursos) {
+            for (RecursoDigital recurso : this.recursos) {
+                if (recurso.getId().equals(id)) {
+                    return recurso;
+                }
             }
         }
         throw new RecursoNoDisponibleException("No se encontró el recurso con ID: " + id);
     }
-
 
     public synchronized void prestar(Prestable recurso, Usuario usuario) {
         System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para prestar el recurso " + ((RecursoDigital) recurso).getTitulo());
         if (recurso.isDisponible()) {
             recurso.prestar(usuario);
             String recursoId = ((RecursoDigital) recurso).getId();
-            contadorPrestamos.put(recursoId, contadorPrestamos.getOrDefault(recursoId, 0) + 1);
-            // Registrar el préstamo en el historial
-            historialPrestamos.add(new Prestamo((RecursoDigital) recurso, usuario, LocalDateTime.now()));
-            // Crear y enviar notificación de préstamo
+            synchronized (contadorPrestamos) {
+                contadorPrestamos.put(recursoId, contadorPrestamos.getOrDefault(recursoId, 0) + 1);
+            }
+            synchronized (historialPrestamos) {
+                historialPrestamos.add(new Prestamo((RecursoDigital) recurso, usuario, LocalDateTime.now()));
+            }
             NotificacionPrestamo notificacion = new NotificacionPrestamo(usuario, (RecursoDigital) recurso, LocalDateTime.now().format(FORMATTER));
             enviarNotificacionAsincrona(notificacion);
         } else {
@@ -142,10 +175,8 @@ public class GestorRecursos {
         System.out.println("Hilo " + Thread.currentThread().getName() + ": Adquiriendo lock para devolver el recurso " + recurso.getTitulo());
         if (recurso instanceof Prestable) {
             ((Prestable) recurso).devolver(usuario);
-            // Crear y enviar notificación de devolución
             NotificacionDevolucion notificacion = new NotificacionDevolucion(usuario, recurso, LocalDateTime.now().format(FORMATTER));
             enviarNotificacionAsincrona(notificacion);
-            // Notificar al siguiente usuario en la cola de reserva si existe
             Queue<Reserva> colaReservas = reservas.get(recurso.getId());
             if (colaReservas != null && !colaReservas.isEmpty()) {
                 Reserva siguienteReserva = colaReservas.poll();
@@ -154,11 +185,10 @@ public class GestorRecursos {
                     ((Prestable) recurso).prestar(usuarioAReservar);
                     recurso.notificarDisponibilidad(usuarioAReservar);
                     System.out.println("El recurso " + recurso.getTitulo() + " ha sido prestado al usuario " + usuarioAReservar.getNombre() + " (ID: " + usuarioAReservar.getId() + ").");
-                    // Aquí también podríamos enviar una notificación al usuario que tomó la reserva
                     NotificacionPrestamo notificacionReservaTomada = new NotificacionPrestamo(usuarioAReservar, recurso, LocalDateTime.now().format(FORMATTER));
                     enviarNotificacionAsincrona(notificacionReservaTomada);
-                } // Cierre del if (recurso instanceof Prestable) interno
-            } // Cierre del if (colaReservas != null && !colaReservas.isEmpty())
+                }
+            }
         } else {
             System.out.println("El recurso " + recurso.getTitulo() + " no se puede prestar.");
         }
@@ -166,7 +196,9 @@ public class GestorRecursos {
     }
 
     public void ordenarRecursos(Comparator<RecursoDigital> comparator) {
-        this.recursos.sort(comparator);
+        synchronized (recursos) {
+            this.recursos.sort(comparator);
+        }
     }
 
     public static Comparator<RecursoDigital> compararPorId() {
@@ -186,20 +218,37 @@ public class GestorRecursos {
     }
 
     public Map<String, Integer> getContadorPrestamos() {
-        return contadorPrestamos;
+        synchronized (contadorPrestamos) {
+            return new HashMap<>(contadorPrestamos); // Devolver una copia para seguridad
+        }
     }
 
-    public List<Map.Entry<String, Integer>> generarReporteRecursosMasPrestados() {
-        return contadorPrestamos.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .collect(Collectors.toList());
+    public CompletableFuture<List<Map.Entry<String, Integer>>> generarReporteRecursosMasPrestados() {
+        return CompletableFuture.supplyAsync(() -> {
+            synchronized (contadorPrestamos) {
+                return contadorPrestamos.entrySet().stream()
+                        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                        .collect(Collectors.toList());
+            }
+        }, executorService);
+    }
+
+    public CompletableFuture<List<Map.Entry<Usuario, Integer>>> generarReporteUsuariosMasPrestadores() {
+        return CompletableFuture.supplyAsync(() -> {
+            Map<Usuario, Integer> conteo;
+            synchronized (historialPrestamos) {
+                conteo = contarPrestamosPorUsuario();
+            }
+            return conteo.entrySet().stream()
+                    .sorted(Map.Entry.<Usuario, Integer>comparingByValue(Comparator.reverseOrder()))
+                    .collect(Collectors.toList());
+        }, executorService);
     }
 
     public void shutdown() {
         executorService.shutdown();
     }
 
-    // Clase Prestamo
     private static class Prestamo {
         private RecursoDigital recurso;
         private Usuario usuario;
